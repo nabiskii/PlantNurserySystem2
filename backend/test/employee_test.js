@@ -1,203 +1,172 @@
-const chai = require("chai");
-const sinon = require("sinon");
-const mongoose = require("mongoose");
-const Employee = require("../models/Employee");
-const {
-  addEmployee,
-  updateEmployee,
-  getEmployees,
-  deleteEmployee,
-  getEmployeeById,
-} = require("../controllers/employeeController");
-const { expect } = chai;
+const { expect } = require('chai');
+const sinon = require('sinon');
 
-describe("Employee Controller Tests with calledWithMatch", function () {
-  this.timeout(5000);
+const employeeController = require('../controllers/employeeController');
+const services = require('../services');
 
+function mockRes() {
+  return {
+    status: sinon.stub().returnsThis(),
+    json: sinon.stub(),
+  };
+}
+
+describe('Employee Controller (service-driven)', function () {
   afterEach(() => sinon.restore());
 
-  // AddEmployee
-  describe("AddEmployee", () => {
-    it("should create a new employee successfully", async () => {
-      const req = { body: { name: "Alice", email: "alice@test.com", role: "Staff", phone: "1234567890" } };
-      const createdEmployee = { _id: new mongoose.Types.ObjectId(), ...req.body };
+  describe('addEmployee', () => {
+    it('should return 201 on adding employee', async () => {
+      const req = {
+        body: { name: 'Alice', email: 'alice@test.com', role: 'Staff', phone: '123' },
+        user: { _id: 'u1' },
+      };
+      const created = { _id: 'e1', ...req.body };
+      const stub = sinon.stub(services.employeeService, 'create').resolves(created);
 
-      sinon.stub(Employee, "findOne").resolves(null);
-      const createStub = sinon.stub(Employee, "create").resolves(createdEmployee);
+      const res = mockRes();
+      const next = sinon.spy();
 
-      const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
-      await addEmployee(req, res);
+      await employeeController.addEmployee(req, res, next);
 
-      expect(createStub.calledWithMatch(req.body)).to.be.true;
+      expect(stub.calledOnceWith(req.body, { user: req.user })).to.be.true;
       expect(res.status.calledWith(201)).to.be.true;
-      expect(res.json.calledWith(createdEmployee)).to.be.true;
+      expect(res.json.calledWith(created)).to.be.true;
+      expect(next.notCalled).to.be.true;
     });
 
-    it("should return 500 if an error occurs", async () => {
-      sinon.stub(Employee, "findOne").resolves(null);
-      sinon.stub(Employee, "create").rejects(new Error("DB Error"));
+    it('should forward error via next(err)', async () => {
+      const req = { body: { name: 'Alice', email: 'bad', role: 'Staff' }, user: { _id: 'u1' } };
+      const err = new Error('Invalid email'); err.status = 400;
+      sinon.stub(services.employeeService, 'create').rejects(err);
 
-      const req = { body: { name: "Alice", email: "alice@test.com", role: "Staff" } };
-      const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
+      const res = mockRes();
+      const next = sinon.spy();
 
-      await addEmployee(req, res);
+      await employeeController.addEmployee(req, res, next);
 
-      expect(res.status.calledWith(500)).to.be.true;
-      expect(res.json.calledWithMatch({ message: "DB Error" })).to.be.true;
-    });
-  });
-
-  // UpdateEmployee
-  describe("UpdateEmployee", () => {
-    it("should update an employee successfully", async () => {
-      const empId = new mongoose.Types.ObjectId();
-      const updatedEmployee = { _id: empId, name: "Alice Updated" };
-
-      const stub = sinon.stub(Employee, "findByIdAndUpdate").resolves(updatedEmployee);
-
-      const req = { params: { id: empId.toString() }, body: { name: "Alice Updated" } };
-      const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
-
-      await updateEmployee(req, res);
-
-      expect(stub.calledWithMatch(sinon.match.string, req.body, sinon.match.any)).to.be.true;
-      expect(res.status.calledWith(200)).to.be.true;
-      expect(res.json.calledWith(updatedEmployee)).to.be.true;
-    });
-
-    it("should return 404 if employee is not found", async () => {
-      const stub = sinon.stub(Employee, "findByIdAndUpdate").resolves(null);
-
-      const req = { params: { id: new mongoose.Types.ObjectId().toString() }, body: {} };
-      const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
-
-      await updateEmployee(req, res);
-
-      expect(res.status.calledWith(404)).to.be.true;
-      expect(res.json.calledWith({ message: "Employee not found" })).to.be.true;
-    });
-
-    it("should return 500 on error", async () => {
-      const stub = sinon.stub(Employee, "findByIdAndUpdate").rejects(new Error("DB Error"));
-
-      const req = { params: { id: new mongoose.Types.ObjectId().toString() }, body: {} };
-      const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
-
-      await updateEmployee(req, res);
-
-      expect(res.status.calledWith(500)).to.be.true;
-      expect(res.json.calledWithMatch({ message: "DB Error" })).to.be.true;
+      expect(next.calledOnceWith(err)).to.be.true;
+      expect(res.status.called).to.be.false;
     });
   });
 
-  // GetEmployees
-  describe("GetEmployees", () => {
-    it("should return all employees", async () => {
-      const employees = [{ _id: new mongoose.Types.ObjectId(), name: "Alice" }];
-      const stub = sinon.stub(Employee, "find").resolves(employees);
+  describe('getEmployees', () => {
+    it('should return 200 with all employees', async () => {
+      const req = {
+        query: { q: 'alice', role: 'Staff', department: 'Sales', sort: '-dateJoined', limit: '10' },
+        user: { _id: 'u1' },
+      };
+      const rows = [{ _id: 'e1', name: 'Alice' }];
+      const stub = sinon.stub(services.employeeService, 'findAll').resolves(rows);
 
-      const req = {};
-      const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
+      const res = mockRes();
+      const next = sinon.spy();
 
-      await getEmployees(req, res);
+      await employeeController.getEmployees(req, res, next);
 
       expect(stub.calledOnce).to.be.true;
+      expect(stub.firstCall.args[0]).to.be.an('object'); // options
+      expect(stub.firstCall.args[1]).to.deep.equal({ user: req.user });
       expect(res.status.calledWith(200)).to.be.true;
-      expect(res.json.calledWith(employees)).to.be.true;
+      expect(res.json.calledWith(rows)).to.be.true;
+      expect(next.notCalled).to.be.true;
     });
 
-    it("should return 500 on error", async () => {
-      const stub = sinon.stub(Employee, "find").rejects(new Error("DB Error"));
+    it('should forward error via next(err)', async () => {
+      const req = { query: {}, user: { _id: 'u1' } };
+      const err = new Error('DB Error'); err.status = 500;
+      sinon.stub(services.employeeService, 'findAll').rejects(err);
 
-      const req = {};
-      const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
+      const res = mockRes();
+      const next = sinon.spy();
 
-      await getEmployees(req, res);
+      await employeeController.getEmployees(req, res, next);
 
-      expect(res.status.calledWith(500)).to.be.true;
-      expect(res.json.calledWithMatch({ message: "DB Error" })).to.be.true;
+      expect(next.calledOnceWith(err)).to.be.true;
     });
   });
 
-  // GetEmployeeById
-  describe("GetEmployeeById", () => {
-    it("should return employee by id successfully", async () => {
-      const empId = new mongoose.Types.ObjectId();
-      const employee = { _id: empId, name: "Alice" };
-      const stub = sinon.stub(Employee, "findById").resolves(employee);
+  describe('getEmployeeById', () => {
+    it('should return 200 with employee', async () => {
+      const req = { params: { id: 'e1' }, query: {}, user: { _id: 'u1' } };
+      const item = { _id: 'e1', name: 'Alice' };
+      const stub = sinon.stub(services.employeeService, 'findById').resolves(item);
 
-      const req = { params: { id: empId.toString() } };
-      const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
+      const res = mockRes();
+      const next = sinon.spy();
 
-      await getEmployeeById(req, res);
+      await employeeController.getEmployeeById(req, res, next);
 
-      expect(stub.calledWithMatch(sinon.match.string)).to.be.true;
+      expect(stub.calledOnce).to.be.true;
+      expect(stub.firstCall.args[0]).to.equal('e1');
+      expect(stub.firstCall.args[1]).to.have.property('user', req.user);
       expect(res.status.calledWith(200)).to.be.true;
-      expect(res.json.calledWith(employee)).to.be.true;
+      expect(res.json.calledWith(item)).to.be.true;
+      expect(next.notCalled).to.be.true;
     });
 
-    it("should return 404 if employee is not found", async () => {
-      const stub = sinon.stub(Employee, "findById").resolves(null);
+    // If you later want a 404 test, mirror the plant pattern:
+    // it('should forward 404 via next(err)', async () => { ... });
+  });
 
-      const req = { params: { id: new mongoose.Types.ObjectId().toString() } };
-      const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
+  describe('updateEmployee', () => {
+    it('should return 200 with updated employee', async () => {
+      const req = { params: { id: 'e1' }, body: { name: 'Alice Updated' }, user: { _id: 'u1' } };
+      const updated = { _id: 'e1', name: 'Alice Updated' };
+      const stub = sinon.stub(services.employeeService, 'update').resolves(updated);
 
-      await getEmployeeById(req, res);
+      const res = mockRes();
+      const next = sinon.spy();
 
-      expect(res.status.calledWith(404)).to.be.true;
-      expect(res.json.calledWith({ message: "Employee not found" })).to.be.true;
+      await employeeController.updateEmployee(req, res, next);
+
+      expect(stub.calledOnceWith('e1', req.body, { user: req.user })).to.be.true;
+      expect(res.status.calledWith(200)).to.be.true;
+      expect(res.json.calledWith(updated)).to.be.true;
+      expect(next.notCalled).to.be.true;
     });
 
-    it("should return 500 on error", async () => {
-      const stub = sinon.stub(Employee, "findById").rejects(new Error("DB Error"));
+    it('should forward error via next(err)', async () => {
+      const req = { params: { id: 'e1' }, body: {}, user: { _id: 'u1' } };
+      const err = new Error('DB Error'); err.status = 500;
+      sinon.stub(services.employeeService, 'update').rejects(err);
 
-      const req = { params: { id: new mongoose.Types.ObjectId().toString() } };
-      const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
+      const res = mockRes();
+      const next = sinon.spy();
 
-      await getEmployeeById(req, res);
+      await employeeController.updateEmployee(req, res, next);
 
-      expect(res.status.calledWith(500)).to.be.true;
-      expect(res.json.calledWithMatch({ message: "DB Error" })).to.be.true;
+      expect(next.calledOnceWith(err)).to.be.true;
     });
   });
 
-  // DeleteEmployee
-  describe("DeleteEmployee", () => {
-    it("should delete an employee successfully", async () => {
-      const empId = new mongoose.Types.ObjectId();
-      const stub = sinon.stub(Employee, "findByIdAndDelete").resolves({ _id: empId });
+  describe('deleteEmployee', () => {
+    it('should return 200 on deleting employee', async () => {
+      const req = { params: { id: 'e1' }, user: { _id: 'u1' } };
+      const removed = { _id: 'e1' };
+      const stub = sinon.stub(services.employeeService, 'delete').resolves(removed);
 
-      const req = { params: { id: empId.toString() } };
-      const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
+      const res = mockRes();
+      const next = sinon.spy();
 
-      await deleteEmployee(req, res);
+      await employeeController.deleteEmployee(req, res, next);
 
+      expect(stub.calledOnceWith('e1', { user: req.user })).to.be.true;
       expect(res.status.calledWith(200)).to.be.true;
-      expect(res.json.calledWith({ message: "Employee deleted successfully" })).to.be.true;
+      expect(res.json.calledWithMatch({ message: sinon.match.string, removed })).to.be.true;
+      expect(next.notCalled).to.be.true;
     });
 
-    it("should return 404 if employee is not found", async () => {
-      const stub = sinon.stub(Employee, "findByIdAndDelete").resolves(null);
+    it('should forward error via next(err)', async () => {
+      const req = { params: { id: 'e1' }, user: { _id: 'u1' } };
+      const err = new Error('DB Error'); err.status = 500;
+      sinon.stub(services.employeeService, 'delete').rejects(err);
 
-      const req = { params: { id: new mongoose.Types.ObjectId().toString() } };
-      const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
+      const res = mockRes();
+      const next = sinon.spy();
 
-      await deleteEmployee(req, res);
+      await employeeController.deleteEmployee(req, res, next);
 
-      expect(res.status.calledWith(404)).to.be.true;
-      expect(res.json.calledWith({ message: "Employee not found" })).to.be.true;
-    });
-
-    it("should return 500 if an error occurs", async () => {
-      const stub = sinon.stub(Employee, "findByIdAndDelete").rejects(new Error("DB Error"));
-
-      const req = { params: { id: new mongoose.Types.ObjectId().toString() } };
-      const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
-
-      await deleteEmployee(req, res);
-
-      expect(res.status.calledWith(500)).to.be.true;
-      expect(res.json.calledWithMatch({ message: "DB Error" })).to.be.true;
+      expect(next.calledOnceWith(err)).to.be.true;
     });
   });
 });
