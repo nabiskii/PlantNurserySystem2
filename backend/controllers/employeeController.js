@@ -1,73 +1,70 @@
-const Employee = require('../models/Employee');
+const { employeeService } = require('../services');
 
-const addEmployee = async (req, res) => {
+// helper function to parse ints
+function asInt(v, d) {
+  const n = parseInt(v, 10);
+  return Number.isFinite(n) ? n : d;
+}
+
+const addEmployee = async (req, res, next) => {
     try {
-        const { name, email, role, phone, department, dateJoined } = req.body;
-        if (!name || !email || !role) {
-            return res.status(400).json({ message: 'Name, email, and role are required' });
-        }
-
-        // Basic email format check
-        const emailRegex = /.+@.+\..+/;
-        if (!emailRegex.test(email)) {
-            return res.status(400).json({ message: 'Invalid email address' });
-        }
-
-        const existingEmployee = await Employee.findOne({ email });
-        if (existingEmployee) {
-            return res.status(400).json({ message: 'Employee with this email already exists' });
-        }
-
-        const employee = await Employee.create({ name, email, role, phone, department, dateJoined });
+        const employee = await employeeService.create(req.body, { user: req.user });
         res.status(201).json(employee);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };
 
-const getEmployees = async (req, res) => {
+const getEmployees = async (req, res, next) => {
     try {
-        const employees = await Employee.find();
+        const options = {
+            query: {
+                q: req.query.q,
+                role: req.query.role,
+                department: req.query.department,
+            },
+            sort: req.query.sort,
+            limit: asInt(req.query.limit, undefined),
+            select: req.query.select,
+            populate: req.query.populate,
+        };
+        const employees = await employeeService.findAll(options, { user: req.user });
         res.status(200).json(employees);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };
 
-const getEmployeeById = async (req, res) => {
+const getEmployeeById = async (req, res, next) => {
     try {
-        const employee = await Employee.findById(req.params.id);
-        if (!employee) {
-            return res.status(404).json({ message: 'Employee not found' });
-        }
+        const employee = await employeeService.findById(req.params.id, { 
+            user: req.user,
+            options: {
+                select: req.query.select,
+                populate: req.query.populate,
+            }
+        });
         res.status(200).json(employee);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };
 
 const updateEmployee = async (req, res) => {
     try {
-        const updatedEmployee = await Employee.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
-
-        if (!updatedEmployee) {
-            return res.status(404).json({ message: 'Employee not found' });
-        }
+        const updatedEmployee = await employeeService.update(req.params.id, req.body, { user: req.user });
         res.status(200).json(updatedEmployee);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };
 
 const deleteEmployee = async (req, res) => {
     try {
-        const deletedEmployee = await Employee.findByIdAndDelete(req.params.id);
-        if (!deletedEmployee) {
-            return res.status(404).json({ message: 'Employee not found' });
-        }
-        res.status(200).json({ message: 'Employee deleted successfully' });
+        const removed = await employeeService.delete(req.params.id, { user: req.user });
+        res.status(200).json({ message: 'Employee deleted successfully', removed });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };
 
