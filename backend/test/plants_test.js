@@ -1,210 +1,165 @@
-const chai = require("chai");
-const sinon = require("sinon");
-const mongoose = require("mongoose");
-const Plant = require("../models/Plant");
-const {
-  addPlant,
-  updatePlant,
-  getPlants,
-  deletePlant,
-  getPlantById,
-} = require("../controllers/plantController");
-const { expect } = chai;
+const { expect } = require('chai');
+const sinon = require('sinon');
 
-describe("Plant Controller Tests with calledWithMatch", function () {
-  this.timeout(5000); // Increase timeout for async tests
+const plantController = require('../controllers/plantController');
 
+const services = require('../services');
+
+function mockRes() {
+  return {
+    status: sinon.stub().returnsThis(),
+    json: sinon.stub(),
+  };
+}
+
+describe('Plant Controller (service-driven)', function () {
   afterEach(() => sinon.restore());
 
-  // AddPlant
-  describe("AddPlant", () => {
-    it("should create a new plant successfully", async () => {
-      const req = { body: { name: "Rose", category: "Flowering", price: 10, description: "Red rose" } };
-      const createdPlant = { _id: new mongoose.Types.ObjectId(), ...req.body };
+  describe('addPlant', () => {
+    it('should return 201 on adding plant', async () => {
+      const req = { body: { name: 'Rose', category: 'Flowering', price: 10 }, user: { _id: 'u1' } };
+      const created = { _id: 'p1', ...req.body, inStock: true };
+      const createStub = sinon.stub(services.plantService, 'create').resolves(created);
 
-      sinon.stub(Plant, "findOne").resolves(null);
-      const createStub = sinon.stub(Plant, "create").resolves(createdPlant);
+      const res = mockRes();
+      const next = sinon.spy();
 
-      const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
-      await addPlant(req, res);
+      await plantController.addPlant(req, res, next);
 
-      expect(createStub.calledWithMatch(req.body)).to.be.true;
+      expect(createStub.calledOnceWith(req.body, { user: req.user })).to.be.true;
       expect(res.status.calledWith(201)).to.be.true;
-      expect(res.json.calledWith(createdPlant)).to.be.true;
+      expect(res.json.calledWith(created)).to.be.true;
+      expect(next.notCalled).to.be.true;
     });
 
-    it("should return 500 if an error occurs", async () => {
-      sinon.stub(Plant, "findOne").resolves(null);
-      sinon.stub(Plant, "create").rejects(new Error("DB Error"));
+    it('should forward error via next(err)', async () => {
+      const req = { body: { name: 'Rose' }, user: { _id: 'u1' } };
+      const err = new Error('A plant with this name already exists'); err.status = 400;
+      sinon.stub(services.plantService, 'create').rejects(err);
 
-      const req = { body: { name: "Rose", category: "Flowering", price: 10 } };
-      const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
+      const res = mockRes();
+      const next = sinon.spy();
 
-      await addPlant(req, res);
+      await plantController.addPlant(req, res, next);
 
-      expect(res.status.calledWith(500)).to.be.true;
-      expect(res.json.calledWithMatch({ message: "DB Error" })).to.be.true;
-    });
-  });
-
-  // UpdatePlant
-  describe("UpdatePlant", () => {
-    it("should update a plant successfully", async () => {
-      const plantId = new mongoose.Types.ObjectId();
-      const updatedPlant = { _id: plantId, name: "New Rose" };
-
-      const stub = sinon.stub(Plant, "findByIdAndUpdate").resolves(updatedPlant);
-
-      const req = { params: { id: plantId.toString() }, body: { name: "New Rose" } };
-      const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
-
-      await updatePlant(req, res);
-
-      expect(stub.calledWithMatch(sinon.match.string, req.body, sinon.match.any)).to.be.true;
-      expect(res.status.calledWith(200)).to.be.true;
-      expect(res.json.calledWith(updatedPlant)).to.be.true;
-    });
-
-    it("should return 404 if plant is not found", async () => {
-      const stub = sinon.stub(Plant, "findByIdAndUpdate").resolves(null);
-
-      const req = { params: { id: new mongoose.Types.ObjectId().toString() }, body: {} };
-      const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
-
-      await updatePlant(req, res);
-
-      expect(stub.calledWithMatch(sinon.match.string, req.body, sinon.match.any)).to.be.true;
-      expect(res.status.calledWith(404)).to.be.true;
-      expect(res.json.calledWith({ message: "Plant not found" })).to.be.true;
-    });
-
-    it("should return 500 on error", async () => {
-      const stub = sinon.stub(Plant, "findByIdAndUpdate").rejects(new Error("DB Error"));
-
-      const req = { params: { id: new mongoose.Types.ObjectId().toString() }, body: {} };
-      const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
-
-      await updatePlant(req, res);
-
-      expect(stub.calledWithMatch(sinon.match.string, req.body, sinon.match.any)).to.be.true;
-      expect(res.status.calledWith(500)).to.be.true;
-      expect(res.json.calledWithMatch({ message: "DB Error" })).to.be.true;
+      expect(next.calledOnceWith(err)).to.be.true;
+      expect(res.status.called).to.be.false; // controller does not send on error
     });
   });
 
-  // GetPlants
-  describe("GetPlants", () => {
-    it("should return all plants", async () => {
-      const plants = [{ _id: new mongoose.Types.ObjectId(), name: "Rose" }];
-      const stub = sinon.stub(Plant, "find").resolves(plants);
+  describe('getPlants', () => {
+    it('should return 200 with all plants', async () => {
+      const req = {
+        query: { name: 'rose', category: 'Flowering', available: 'true', sort: '-price', limit: '10' },
+        user: { _id: 'u1' },
+      };
+      const rows = [{ _id: 'p1', name: 'Rose', inStock: true }];
+      const findAllStub = sinon.stub(services.plantService, 'findAll').resolves(rows);
 
-      const req = {};
-      const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
+      const res = mockRes();
+      const next = sinon.spy();
 
-      await getPlants(req, res);
+      await plantController.getPlants(req, res, next);
 
-      expect(stub.calledOnce).to.be.true;
+      expect(findAllStub.calledOnce).to.be.true;
+      expect(findAllStub.firstCall.args[0]).to.be.an('object'); // options
+      expect(findAllStub.firstCall.args[1]).to.deep.equal({ user: req.user });
       expect(res.status.calledWith(200)).to.be.true;
-      expect(res.json.calledWith(plants)).to.be.true;
+      expect(res.json.calledWith(rows)).to.be.true;
+      expect(next.notCalled).to.be.true;
     });
 
-    it("should return 500 on error", async () => {
-      const stub = sinon.stub(Plant, "find").rejects(new Error("DB Error"));
+    it('should forward error via next(err)', async () => {
+      const req = { query: {}, user: { _id: 'u1' } };
+      const err = new Error('DB Error'); err.status = 500;
+      sinon.stub(services.plantService, 'findAll').rejects(err);
 
-      const req = {};
-      const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
+      const res = mockRes();
+      const next = sinon.spy();
 
-      await getPlants(req, res);
+      await plantController.getPlants(req, res, next);
 
-      expect(res.status.calledWith(500)).to.be.true;
-      expect(res.json.calledWithMatch({ message: "DB Error" })).to.be.true;
+      expect(next.calledOnceWith(err)).to.be.true;
     });
   });
 
-  // GetPlantById
-  describe("GetPlantById", () => {
-    it("should return plant by id successfully", async () => {
-      const plantId = new mongoose.Types.ObjectId();
-      const plant = { _id: plantId, name: "Rose" };
-      const stub = sinon.stub(Plant, "findById").resolves(plant);
+  describe('getPlantById', () => {
+    it('should return 200 with getting a plant', async () => {
+      const req = { params: { id: 'p1' }, query: {}, user: { _id: 'u1' } };
+      const item = { _id: 'p1', name: 'Rose' };
+      const stub = sinon.stub(services.plantService, 'findById').resolves(item);
 
-      const req = { params: { id: plantId.toString() } };
-      const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
+      const res = mockRes();
+      const next = sinon.spy();
 
-      await getPlantById(req, res);
+      await plantController.getPlantById(req, res, next);
 
-      expect(stub.calledWithMatch(sinon.match.string)).to.be.true;
+      expect(stub.calledOnceWith('p1', sinon.match({ user: req.user }))).to.be.true;
       expect(res.status.calledWith(200)).to.be.true;
-      expect(res.json.calledWith(plant)).to.be.true;
-    });
-
-    it("should return 404 if plant is not found", async () => {
-      const stub = sinon.stub(Plant, "findById").resolves(null);
-
-      const req = { params: { id: new mongoose.Types.ObjectId().toString() } };
-      const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
-
-      await getPlantById(req, res);
-
-      expect(stub.calledWithMatch(sinon.match.string)).to.be.true;
-      expect(res.status.calledWith(404)).to.be.true;
-      expect(res.json.calledWith({ message: "Plant not found" })).to.be.true;
-    });
-
-    it("should return 500 on error", async () => {
-      const stub = sinon.stub(Plant, "findById").rejects(new Error("DB Error"));
-
-      const req = { params: { id: new mongoose.Types.ObjectId().toString() } };
-      const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
-
-      await getPlantById(req, res);
-
-      expect(stub.calledWithMatch(sinon.match.string)).to.be.true;
-      expect(res.status.calledWith(500)).to.be.true;
-      expect(res.json.calledWithMatch({ message: "DB Error" })).to.be.true;
+      expect(res.json.calledWith(item)).to.be.true;
+      expect(next.notCalled).to.be.true;
     });
   });
 
-  // DeletePlant
-  describe("DeletePlant", () => {
-    it("should delete a plant successfully", async () => {
-      const plantId = new mongoose.Types.ObjectId();
-      const stub = sinon.stub(Plant, "findByIdAndDelete").resolves({ _id: plantId });
+  describe('updatePlant', () => {
+    it('should return 200 with updated plant', async () => {
+      const req = { params: { id: 'p1' }, body: { name: 'New Rose' }, user: { _id: 'u1' } };
+      const updated = { _id: 'p1', name: 'New Rose' };
+      const stub = sinon.stub(services.plantService, 'update').resolves(updated);
 
-      const req = { params: { id: plantId.toString() } };
-      const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
+      const res = mockRes();
+      const next = sinon.spy();
 
-      await deletePlant(req, res);
+      await plantController.updatePlant(req, res, next);
 
-      expect(stub.calledWithMatch(sinon.match.string)).to.be.true;
+      expect(stub.calledOnceWith('p1', req.body, { user: req.user })).to.be.true;
       expect(res.status.calledWith(200)).to.be.true;
-      expect(res.json.calledWith({ message: "Plant deleted successfully" })).to.be.true;
+      expect(res.json.calledWith(updated)).to.be.true;
+      expect(next.notCalled).to.be.true;
     });
 
-    it("should return 404 if plant is not found", async () => {
-      const stub = sinon.stub(Plant, "findByIdAndDelete").resolves(null);
+    it('should forward error via next(err)', async () => {
+      const req = { params: { id: 'p1' }, body: {}, user: { _id: 'u1' } };
+      const err = new Error('DB Error'); err.status = 500;
+      sinon.stub(services.plantService, 'update').rejects(err);
 
-      const req = { params: { id: new mongoose.Types.ObjectId().toString() } };
-      const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
+      const res = mockRes();
+      const next = sinon.spy();
 
-      await deletePlant(req, res);
+      await plantController.updatePlant(req, res, next);
 
-      expect(stub.calledWithMatch(sinon.match.string)).to.be.true;
-      expect(res.status.calledWith(404)).to.be.true;
-      expect(res.json.calledWith({ message: "Plant not found" })).to.be.true;
+      expect(next.calledOnceWith(err)).to.be.true;
+    });
+  });
+
+  describe('deletePlant', () => {
+    it('should return 200 on deleting plant', async () => {
+      const req = { params: { id: 'p1' }, user: { _id: 'u1' } };
+      const removed = { _id: 'p1' };
+      const stub = sinon.stub(services.plantService, 'delete').resolves(removed);
+
+      const res = mockRes();
+      const next = sinon.spy();
+
+      await plantController.deletePlant(req, res, next);
+
+      expect(stub.calledOnceWith('p1', { user: req.user })).to.be.true;
+      expect(res.status.calledWith(200)).to.be.true;
+      expect(res.json.calledWithMatch({ message: sinon.match.string, removed })).to.be.true;
+      expect(next.notCalled).to.be.true;
     });
 
-    it("should return 500 if an error occurs", async () => {
-      const stub = sinon.stub(Plant, "findByIdAndDelete").rejects(new Error("DB Error"));
+    it('should forward error via next(err)', async () => {
+      const req = { params: { id: 'p1' }, user: { _id: 'u1' } };
+      const err = new Error('DB Error'); err.status = 500;
+      sinon.stub(services.plantService, 'delete').rejects(err);
 
-      const req = { params: { id: new mongoose.Types.ObjectId().toString() } };
-      const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
+      const res = mockRes();
+      const next = sinon.spy();
 
-      await deletePlant(req, res);
+      await plantController.deletePlant(req, res, next);
 
-      expect(stub.calledWithMatch(sinon.match.string)).to.be.true;
-      expect(res.status.calledWith(500)).to.be.true;
-      expect(res.json.calledWithMatch({ message: "DB Error" })).to.be.true;
+      expect(next.calledOnceWith(err)).to.be.true;
     });
   });
 });

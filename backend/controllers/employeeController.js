@@ -50,7 +50,7 @@ const getEmployeeById = async (req, res, next) => {
     }
 };
 
-const updateEmployee = async (req, res) => {
+const updateEmployee = async (req, res, next) => {
     try {
         const updatedEmployee = await employeeService.update(req.params.id, req.body, { user: req.user });
         res.status(200).json(updatedEmployee);
@@ -59,7 +59,7 @@ const updateEmployee = async (req, res) => {
     }
 };
 
-const deleteEmployee = async (req, res) => {
+const deleteEmployee = async (req, res, next) => {
     try {
         const removed = await employeeService.delete(req.params.id, { user: req.user });
         res.status(200).json({ message: 'Employee deleted successfully', removed });
