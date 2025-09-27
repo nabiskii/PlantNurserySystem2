@@ -7,18 +7,18 @@ function asInt(value, defaultValue) {
 }
 
 // POST /api/plants
-const addPlant = async (req, res) => {
+const addPlant = async (req, res, next) => {
     try {
         const plant = await plantService.create(req.body, { user: req.user });
         res.status(201).json(plant);
     }
     catch (error) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };
 
 // GET /api/plants
-const getPlants = async (req, res) => {
+const getPlants = async (req, res, next) => {
     try {
         const options = {
             query: {
@@ -35,12 +35,12 @@ const getPlants = async (req, res) => {
         res.status(200).json(plants);
 
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };
 
 // GET /api/plants/:id
-const getPlantById = async (req, res) => {
+const getPlantById = async (req, res, next) => {
     try {
         const plant = await plantService.findById(req.params.id, { 
             user: req.user,
@@ -52,29 +52,29 @@ const getPlantById = async (req, res) => {
         res.status(200).json(plant);
     }
     catch (error) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };
 
 // PUT /api/plants/:id
-const updatePlant = async (req, res) => {
+const updatePlant = async (req, res, next) => {
     try {
         const updatedPlant = await plantService.update(req.params.id, req.body, { user: req.user });
         res.status(200).json(updatedPlant);
     }
     catch (error) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };
 
 // DELETE /api/plants/:id
-const deletePlant = async (req, res) => {
+const deletePlant = async (req, res, next) => {
     try {
         const removed = await plantService.delete(req.params.id, { user: req.user });
         res.status(200).json({ message: 'Plant deleted successfully!', removed });
     }
     catch (error) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };
 

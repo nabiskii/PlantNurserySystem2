@@ -84,7 +84,7 @@ class BaseInventoryService {
         return this.formatOutput(row, this._ctx('findById', user));
     }
 
-    async update (id, data) {
+    async update (id, data, {user} = {}) {
         await this.authorize(this._ctx('update', user));
         const clean = await this.validate(data, this._ctx('update', user));
         const masked = await this.updateMask(clean, this._ctx('update', user));
