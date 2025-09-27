@@ -1,4 +1,4 @@
 module.exports = {
-  plantService: require('./plantService'),
+  plantService: require('./PlantService'),
   employeeService: require('./employeeService'),
 };
