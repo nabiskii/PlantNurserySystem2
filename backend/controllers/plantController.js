@@ -1,20 +1,15 @@
-const Plant = require ('../models/Plant');
+const { plantService } = require('../services');
 
+// helper function to parse ints
+function asInt(value, defaultValue) {
+    const parsed = parseInt(value, 10);
+    return Number.isFinite(parsed) ? parsed : defaultValue;
+}
+
+// POST /api/plants
 const addPlant = async (req, res) => {
     try {
-        const { name, category, price, description } = req.body;
-        if (!name || !category || !price) {
-            return res.status(400).json({ message: 'All fields are required' });
-        }
-        if (typeof price !== 'number' || price < 0) {
-            return res.status(400).json({ message: 'Price must be a positive number' });
-        }
-        const existingPlant = await Plant.findOne({ name });
-        if (existingPlant) {
-            return res.status(400).json({ message: 'Plant with this name already exists' });
-        }
-
-        const plant = await Plant.create({ name, category, price, description });
+        const plant = await plantService.create(req.body, { user: req.user });
         res.status(201).json(plant);
     }
     catch (error) {
@@ -22,23 +17,38 @@ const addPlant = async (req, res) => {
     }
 };
 
-// getting all plants
-
+// GET /api/plants
 const getPlants = async (req, res) => {
     try {
-        const plants = await Plant.find();
+        const options = {
+            query: {
+                name: req.query.name,
+                category: req.query.category,
+                available: req.query.available,
+            },
+            sort: req.query.sort,
+            limit: asInt(req.query.limit, undefined),
+            select: req.query.select,
+            populate: req.query.populate,
+        };
+        const plants = await plantService.findAll(options, { user: req.user });
         res.status(200).json(plants);
+
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
 
+// GET /api/plants/:id
 const getPlantById = async (req, res) => {
     try {
-        const plant = await Plant.findById(req.params.id);
-        if (!plant) {
-            return res.status(404).json({ message: 'Plant not found' });
-        }
+        const plant = await plantService.findById(req.params.id, { 
+            user: req.user,
+            options: {
+                select: req.query.select,
+                populate: req.query.populate,
+            }
+        });
         res.status(200).json(plant);
     }
     catch (error) {
@@ -46,13 +56,10 @@ const getPlantById = async (req, res) => {
     }
 };
 
+// PUT /api/plants/:id
 const updatePlant = async (req, res) => {
     try {
-        const updatedPlant = await Plant.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
-
-        if (!updatedPlant) {
-            return res.status(404).json({ message: 'Plant not found' });
-        }
+        const updatedPlant = await plantService.update(req.params.id, req.body, { user: req.user });
         res.status(200).json(updatedPlant);
     }
     catch (error) {
@@ -60,13 +67,11 @@ const updatePlant = async (req, res) => {
     }
 };
 
+// DELETE /api/plants/:id
 const deletePlant = async (req, res) => {
     try {
-        const deletedPlant = await Plant.findByIdAndDelete(req.params.id);
-        if (!deletedPlant) {
-            return res.status(404).json({ message: 'Plant not found' });
-        }
-        res.status(200).json({ message: 'Plant deleted successfully' });
+        const removed = await plantService.delete(req.params.id, { user: req.user });
+        res.status(200).json({ message: 'Plant deleted successfully!', removed });
     }
     catch (error) {
         res.status(500).json({ message: error.message });

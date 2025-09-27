@@ -16,6 +16,34 @@ class PlantService extends Base {
         return data;
     }
 
+    async create(data, ctx) {
+        try {
+            return await super.create(data, ctx);
+        }
+        catch (error) {
+            if (error.code === 11000 || error.code === 11001) {
+                const e = new Error('A plant with this name already exists');
+                e.status = 400;
+                throw e;
+            }
+            throw error;
+        }
+    }
+
+    async update(id, data, ctx) {
+        try {
+            return await super.update(id, data, ctx);
+        }
+        catch (error) {
+            if (error.code === 11000 || error.code === 11001) {
+                const e = new Error('A plant with this name already exists');
+                e.status = 400;
+                throw e;
+            }
+            throw error;
+        }
+    }
+
     async filter (data) {
         const filter = {};
         if (data?.name) {

@@ -1,4 +1,4 @@
-class baseInventoryService {
+class BaseInventoryService {
     constructor(model) {
         if (!model) {
             throw new Error('Model is required');
@@ -110,4 +110,4 @@ class baseInventoryService {
     }
 }
 
-module.exports = baseInventoryService;
+module.exports = BaseInventoryService;
