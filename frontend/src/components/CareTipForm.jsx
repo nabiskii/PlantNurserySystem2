@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axiosInstance from '../axiosConfig';
+import { api } from '../lib/caretipsClient';
 import { useMessage } from '../context/MessageContext';
 
 const DIFFICULTY = ['easy', 'moderate', 'advanced'];
@@ -33,10 +33,10 @@ const CareTipForm = ({ editing, onDone }) => {
 
     try {
       if (isEdit) {
-        await axiosInstance.put(`/api/caretips/${editing._id}`, payload);
+        await api.update(editing._id, payload); 
         showMessage('success', 'Care tip updated successfully!');
       } else {
-        await axiosInstance.post('/api/caretips', payload);
+        await api.create(payload);
         showMessage('success', 'Care tip created successfully!');
       }
       onDone?.();

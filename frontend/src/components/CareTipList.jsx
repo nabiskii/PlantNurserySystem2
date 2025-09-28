@@ -5,7 +5,7 @@ import {
   useImperativeHandle,
   useCallback,
 } from "react";
-import axiosInstance from "../axiosConfig";
+import { api } from "../lib/caretipsClient";
 import { useMessage } from "../context/MessageContext";
 
 const CareTipList = forwardRef(({ onEdit }, ref) => {
@@ -16,7 +16,7 @@ const CareTipList = forwardRef(({ onEdit }, ref) => {
   const fetchCareTips = useCallback(async () => {
     try {
       // no filters → fetch all
-      const { data } = await axiosInstance.get("/api/caretips");
+      const data = await api.list({ sort: '-updatedAt' });
       setCareTips(data);
     } catch (err) {
       showMessage(
@@ -59,7 +59,7 @@ const CareTipList = forwardRef(({ onEdit }, ref) => {
     const snapshot = careTips;
     removeTip(id);
     try {
-      await axiosInstance.delete(`/api/caretips/${id}`);
+      await api.remove(id);
       showMessage("success", "Care tip deleted successfully!");
       await fetchCareTips();
     } catch (err) {

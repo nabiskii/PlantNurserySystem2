@@ -2,49 +2,41 @@ import { useState, useRef, useEffect } from 'react';
 import CareTipList from '../components/CareTipList';
 import CareTipForm from '../components/CareTipForm';
 import RecentActivity from '../components/RecentActivity';
+import { subscribeActivity } from '../lib/caretipsClient';
 
 export default function CareTipsPage() {
   const [editing, setEditing] = useState(null);
   const [activity, setActivity] = useState([]);
   const careTipListRef = useRef(null); // reference to PlantList
 
-  const handleDone = () => {
+  const handleDone = async () => {
     setEditing(null);
     // trigger CareTipList refresh
     careTipListRef.current?.fetchCareTips?.();
   };
 
   useEffect(() => {
-    const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5001';
-    const es = new EventSource(`${API_BASE}/api/events/caretips`/*, { withCredentials: true }*/);
     const addActivity = (text) =>
       setActivity((prev) => [{ text, ts: Date.now() }, ...prev].slice(0, 50));
 
-    const onCreated = (e) => {
-      const { tip } = JSON.parse(e.data);
-      careTipListRef.current?.upsertTip?.(tip);
-      addActivity(`Created “${tip.title}”`);
-    };
-    const onUpdated = (e) => {
-      const { tip } = JSON.parse(e.data);
-      careTipListRef.current?.upsertTip?.(tip);
-      addActivity(`Updated “${tip.title}”`);
-    };
-    const onDeleted = (e) => {
-      const { tipId } = JSON.parse(e.data);
-      careTipListRef.current?.removeTip?.(tipId);
-      addActivity(`Deleted tip ${tipId}`);
-    };
-
-    es.addEventListener('careTip.created', onCreated);
-    es.addEventListener('careTip.updated', onUpdated);
-    es.addEventListener('careTip.deleted', onDeleted);
+    const unsubscribe = subscribeActivity({
+      onCreated: ({tip}) => {
+        careTipListRef.current?.upsertTip?.(tip);
+        addActivity(`Created “${tip.title}”`);
+      },
+      onUpdated: ({tip}) => {
+        careTipListRef.current?.upsertTip?.(tip);
+        addActivity(`Updated “${tip.title}”`);
+      },
+      onDeleted: ({tipId}) => {
+        careTipListRef.current?.removeTip?.(tipId);
+        addActivity(`Deleted a care tip (ID: ${tipId})`);
+      },
+    });
+    
 
     return () => {
-      es.removeEventListener('careTip.created', onCreated);
-      es.removeEventListener('careTip.updated', onUpdated);
-      es.removeEventListener('careTip.deleted', onDeleted);
-      es.close();
+      unsubscribe();
     };
   }, []);
 
