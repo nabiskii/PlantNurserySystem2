@@ -7,6 +7,9 @@ function withReadTime(x){
   return { ...x, readTimeMin };
 }
 
+const applyOne = (obj) => withReadTime(obj);
+const applyMany = (arr) => arr.map(withReadTime);
+
 class CareTipsService extends Base {
   async authorize({ op, user }) {
     const write = op === 'create' || op === 'update' || op === 'remove';
@@ -45,7 +48,7 @@ class CareTipsService extends Base {
     return f;
   }
 
-  async format(data) {
+  async formatOutput(data) {
     return Array.isArray(data) ? data.map(withReadTime) : withReadTime(data);
   }
 }

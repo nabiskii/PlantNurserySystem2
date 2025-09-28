@@ -1,10 +1,12 @@
 const { careTipsService } = require('../services');
+const bus = require('../lib/eventBus');
 
 function asInt(v,d){ const n = parseInt(v,10); return Number.isFinite(n) ? n : d; }
 
 const addCareTip = async (req, res, next) => {
   try {
     const out = await careTipsService.create(req.body, { user: req.user });
+    bus.emit('careTip.created', {tip: out, user: req.user});
     res.status(201).json(out);
   } catch (err) { next(err); }
 };
@@ -41,6 +43,7 @@ const getCareTipById = async (req, res, next) => {
 const updateCareTip = async (req, res, next) => {
   try {
     const out = await careTipsService.update(req.params.id, req.body, { user: req.user });
+    bus.emit('careTip.updated', {tip: out, user: req.user});
     res.status(200).json(out);
   } catch (err) { next(err); }
 };
@@ -49,6 +52,7 @@ const deleteCareTip = async (req, res, next) => {
   try {
     const { id } = req.params;
     const removed = await careTipsService.delete(id, { user: req.user });
+    bus.emit('careTip.deleted', {tipId: req.params.id, user: req.user});
     return res.status(200).json({ message: `Care tip ${id} deleted`, removed,});
   } catch (err) { return next(err);}
 };

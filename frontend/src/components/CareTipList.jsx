@@ -1,6 +1,12 @@
-import { useState, useEffect, forwardRef, useImperativeHandle, useCallback } from 'react';
-import axiosInstance from '../axiosConfig';
-import { useMessage } from '../context/MessageContext';
+import {
+  useState,
+  useEffect,
+  forwardRef,
+  useImperativeHandle,
+  useCallback,
+} from "react";
+import axiosInstance from "../axiosConfig";
+import { useMessage } from "../context/MessageContext";
 
 const CareTipList = forwardRef(({ onEdit }, ref) => {
   const [careTips, setCareTips] = useState([]);
@@ -10,26 +16,58 @@ const CareTipList = forwardRef(({ onEdit }, ref) => {
   const fetchCareTips = useCallback(async () => {
     try {
       // no filters → fetch all
-      const { data } = await axiosInstance.get('/api/caretips');
+      const { data } = await axiosInstance.get("/api/caretips");
       setCareTips(data);
     } catch (err) {
-      showMessage('error', err.response?.data?.message || 'Failed to fetch care tips');
+      showMessage(
+        "error",
+        err.response?.data?.message || "Failed to fetch care tips"
+      );
     } finally {
       setLoading(false);
     }
   }, [showMessage]);
 
-  useEffect(() => { fetchCareTips(); }, [fetchCareTips]);
-  useImperativeHandle(ref, () => ({ fetchCareTips }), [fetchCareTips]);
+  // Upsert (for SSE: created/updated)
+  const upsertTip = useCallback((tip) => {
+    setCareTips((prev) => {
+      const i = prev.findIndex((t) => t._id === tip._id);
+      if (i === -1) return [tip, ...prev];
+      const next = prev.slice();
+      next[i] = tip;
+      return next;
+    });
+  }, []);
+
+  // Remove (for SSE: deleted)
+  const removeTip = useCallback((tipId) => {
+    setCareTips((prev) => prev.filter((t) => t._id !== tipId));
+  }, []);
+
+  useEffect(() => {
+    fetchCareTips();
+  }, [fetchCareTips]);
+  useImperativeHandle(ref, () => ({ fetchCareTips, upsertTip, removeTip }), [
+    fetchCareTips,
+    upsertTip,
+    removeTip,
+  ]);
 
   const remove = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this care tip?')) return;
+    if (!window.confirm("Are you sure you want to delete this care tip?"))
+      return;
+    const snapshot = careTips;
+    removeTip(id);
     try {
       await axiosInstance.delete(`/api/caretips/${id}`);
-      showMessage('success', 'Care tip deleted successfully!');
+      showMessage("success", "Care tip deleted successfully!");
       await fetchCareTips();
     } catch (err) {
-      showMessage('error', err.response?.data?.message || 'Failed to delete care tip');
+      setCareTips(snapshot); // rollback
+      showMessage(
+        "error",
+        err.response?.data?.message || "Failed to delete care tip"
+      );
     }
   };
 
@@ -41,13 +79,18 @@ const CareTipList = forwardRef(({ onEdit }, ref) => {
         <div key={ct._id} className="card">
           <div className="card-title">{ct.title}</div>
           <div className="card-text">
-            {(ct.tags || []).join(', ') || '—'} • {ct.difficulty?.[0]?.toUpperCase() + ct.difficulty?.slice(1)}
-            {ct.readTimeMin ? ` • ${ct.readTimeMin} min read` : ''}
+            {(ct.tags || []).join(", ") || "—"} •{" "}
+            {ct.difficulty?.[0]?.toUpperCase() + ct.difficulty?.slice(1)}
+            {ct.readTimeMin ? ` • ${ct.readTimeMin} min read` : ""}
           </div>
           <div className="card-text">{ct.content}</div>
           <div className="card-actions">
-            <button className="btn btn-register" onClick={() => onEdit?.(ct)}>Edit</button>
-            <button className="btn btn-logout" onClick={() => remove(ct._id)}>Delete</button>
+            <button className="btn btn-register" onClick={() => onEdit?.(ct)}>
+              Edit
+            </button>
+            <button className="btn btn-logout" onClick={() => remove(ct._id)}>
+              Delete
+            </button>
           </div>
         </div>
       ))}
