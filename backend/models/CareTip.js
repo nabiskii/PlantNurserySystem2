@@ -1,12 +1,6 @@
 const mongoose = require('mongoose');
 
 const CareTipSchema = new mongoose.Schema({
-    plantId: {
-        type: mongoose.Schema.Types.ObjectId, 
-        ref: 'Plant', 
-        required: true, 
-        index: true 
-    },
     title: { 
         type: String, 
         required: true, 

@@ -1,7 +1,6 @@
 const Base = require('./BaseInventoryService');
 const CareTip = require('../models/CareTip');
 
-// decorator to add readTimeMin field
 function withReadTime(x){
   const words = (x.content || '').trim().split(/\s+/).filter(Boolean).length;
   const readTimeMin = Math.max(1, Math.round(words / 200));
@@ -11,18 +10,13 @@ function withReadTime(x){
 class CareTipsService extends Base {
   async authorize({ op, user }) {
     const write = op === 'create' || op === 'update' || op === 'remove';
-    if (!write) return true;
-    // for admin later add if (!user || user.role !== 'Admin') throw ...
-    if (!user) { 
-        const e = new Error('Auth required'); 
-        e.status = 401; 
-        throw e; }
+    if (!write) return true;           // reads public
+    if (!user) { const e = new Error('Auth required'); e.status = 401; throw e; }
     return true;
   }
 
   async validate(p, { op }) {
     if (op === 'create' || op === 'update') {
-      if (!p?.plantId) { const e = new Error('plantId required'); e.status = 400; throw e; }
       if (!p?.title)   { const e = new Error('title required');   e.status = 400; throw e; }
       if (!p?.content) { const e = new Error('content required'); e.status = 400; throw e; }
     }
@@ -35,21 +29,13 @@ class CareTipsService extends Base {
     if (p.content != null) out.content = p.content;
     if (p.tags != null) out.tags = p.tags;
     if (p.difficulty != null) out.difficulty = p.difficulty;
-    if (p.plantId != null) out.plantId = p.plantId;
     return out;
   }
 
   async filter(q) {
     const f = {};
-    if (q?.plantId) {
-        f.plantId = q.plantId;
-    }
-    if (q?.tag) {
-        f.tags = q.tag;
-    }
-    if (q?.difficulty) {
-        f.difficulty = q.difficulty;
-    }
+    if (q?.tag)        f.tags = q.tag;
+    if (q?.difficulty) f.difficulty = q.difficulty;
     if (q?.q) {
       f.$or = [
         { title:   { $regex: q.q, $options: 'i' } },
@@ -59,7 +45,7 @@ class CareTipsService extends Base {
     return f;
   }
 
-  async formatOutput(data) {
+  async format(data) {
     return Array.isArray(data) ? data.map(withReadTime) : withReadTime(data);
   }
 }

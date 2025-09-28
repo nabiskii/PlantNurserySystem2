@@ -14,6 +14,7 @@ app.use(express.json());
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/plants', require('./routes/plantRoutes'));
 app.use('/api/employees', require('./routes/employeeRoutes'));
+app.use('/api/caretips', require('./routes/caretipsRoutes'));
 
 app.use((err, req, res, next) => {
     console.error('[ERR]', err);

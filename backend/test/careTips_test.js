@@ -125,7 +125,9 @@ describe('Care Tips Controller (service-driven)', function () {
       const removed = { _id: 't1' };
       const stub = sinon.stub(services.careTipsService, 'delete').resolves(removed);
 
-      const res = mockRes(); const next = sinon.spy();
+      const res = mockRes();
+      const next = sinon.spy();
+      
       await ctrl.deleteCareTip(req, res, next);
 
       expect(stub.calledOnceWith('t1', { user: req.user })).to.be.true;
@@ -139,7 +141,9 @@ describe('Care Tips Controller (service-driven)', function () {
       const err = new Error('DB Error'); err.status = 500;
       sinon.stub(services.careTipsService, 'delete').rejects(err);
 
-      const res = mockRes(); const next = sinon.spy();
+      const res = mockRes(); 
+      const next = sinon.spy();
+      
       await ctrl.deleteCareTip(req, res, next);
 
       expect(next.calledOnceWith(err)).to.be.true;
