@@ -18,6 +18,7 @@ const Navbar = () => {
           <>
             <Link to="/plants" className="nav-link">Plants CRUD</Link>
             <Link to="/employees" className="nav-link">Employees CRUD</Link>
+            <Link to="/caretips" className="nav-link">Care Tips CRUD</Link>
             <Link to="/profile" className="nav-link">Profile</Link>
             <button onClick={handleLogout} className="btn btn-logout">Logout</button>
           </>
