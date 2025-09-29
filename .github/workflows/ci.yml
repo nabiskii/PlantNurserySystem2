@@ -16,7 +16,7 @@ jobs:
         node-version: [22] # Test on multiple Node.js versions
 
 
-    environment: MONGO_URI
+    environment: MONGO_URI2
 
     steps:
     - name: Checkout Code
@@ -34,10 +34,12 @@ jobs:
         MONGO_URI: ${{ secrets.MONGO_URI }}
         JWT_SECRET: ${{ secrets.JWT_SECRET }}
         PORT: ${{ secrets.PORT }}
+        NEXT_PUBLIC_API_BASE: ${{ secrets.NEXT_PUBLIC_API_BASE }}
       run: | 
         echo "Secret 1 is: $MONGO_URI"
         echo "Secret 2 is: $JWT_SECRET"
         echo "Secret 3 is: $PORT"
+        echo "Secret 4 is: $NEXT_PUBLIC_API_BASE"
       
     - run: pm2 stop all
 
@@ -65,6 +67,7 @@ jobs:
         MONGO_URI: ${{ secrets.MONGO_URI }}
         JWT_SECRET: ${{ secrets.JWT_SECRET }}
         PORT: ${{ secrets.PORT }}
+        NEXT_PUBLIC_API_BASE: ${{ secrets.NEXT_PUBLIC_API_BASE }}
       working-directory: ./backend
       run: npm test
 
