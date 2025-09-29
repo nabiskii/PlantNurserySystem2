@@ -1,9 +1,17 @@
 import axiosInstance from '../axiosConfig';
 
-const BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5001';
+function devApiBase() {
+  if (typeof window === 'undefined') return '';
+  const { protocol, hostname } = window.location;
+  return `${protocol}//${hostname}:5001`;
+}
 
 export function subscribeActivity({ onCreated, onUpdated, onDeleted } = {}) {
-  const es = new EventSource(`${BASE}/api/events/caretips`);
+  const base =
+    process.env.NODE_ENV === 'development'
+      ? devApiBase()
+      : ''; // empty => same-origin in prod behind Nginx
+  const es = new EventSource(`${base}/api/events/caretips`);
 
   if (onCreated) es.addEventListener('careTip.created', (e) => onCreated(JSON.parse(e.data)));
   if (onUpdated) es.addEventListener('careTip.updated', (e) => onUpdated(JSON.parse(e.data)));
