@@ -37,6 +37,19 @@ const PlantList = forwardRef(({ onEdit }, ref) => {
     }
   };
 
+  const addToWishlist = async (plant) => {
+    try {
+      await axiosInstance.post('/api/wishlist/items', {
+        plantId: plant._id,
+        quantity: 1,
+        source: 'internal',
+      });
+      showMessage('success', `Added ${plant.name} to wishlist`);
+    } catch (err) {
+      showMessage('error', err.response?.data?.message || 'Failed to add');
+    }
+  };
+
   if (loading) return <div className="text-center">Loading plants...</div>;
 
   return (
@@ -49,16 +62,14 @@ const PlantList = forwardRef(({ onEdit }, ref) => {
           </div>
           <div className="card-text">{p.description}</div>
           <div className="card-actions">
-            <button
-              className="btn btn-register"
-              onClick={() => onEdit(p)}
-            >
+            <button className="btn btn-register" onClick={() => onEdit(p)}>
               Edit
             </button>
-            <button
-              className="btn btn-logout"
-              onClick={() => remove(p._id)}
-            >
+            {/* NEW: Add to wishlist */}
+            <button className="btn btn-register" onClick={() => addToWishlist(p)}>
+              Add to wishlist
+            </button>
+            <button className="btn btn-logout" onClick={() => remove(p._id)}>
               Delete
             </button>
           </div>

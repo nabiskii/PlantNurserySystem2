@@ -19,6 +19,8 @@ const Navbar = () => {
             <Link to="/plants" className="nav-link">Plants CRUD</Link>
             <Link to="/employees" className="nav-link">Employees CRUD</Link>
             <Link to="/caretips" className="nav-link">Care Tips CRUD</Link>
+            {/* Added wishlist link (use Link instead of <a> to avoid full page reload) */}
+            <Link to="/wishlist" className="nav-link">Wishlist</Link>
             <Link to="/profile" className="nav-link">Profile</Link>
             <button onClick={handleLogout} className="btn btn-logout">Logout</button>
           </>
