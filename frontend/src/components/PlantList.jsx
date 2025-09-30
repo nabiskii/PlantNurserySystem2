@@ -5,6 +5,7 @@ import { useMessage } from '../context/MessageContext';
 const PlantList = forwardRef(({ onEdit }, ref) => {
   const [plants, setPlants] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState(null); // NEW: for button disable/spinner
   const { showMessage } = useMessage();
 
   const fetchPlants = useCallback(async () => {
@@ -37,6 +38,26 @@ const PlantList = forwardRef(({ onEdit }, ref) => {
     }
   };
 
+  // NEW: add-to-wishlist handler (works with the “global wishlist” backend)
+  const addToWishlist = async (plant) => {
+    try {
+      setBusyId(plant._id);
+      await axiosInstance.post("/api/wishlist", {
+        plant: {
+          _id: plant._id,               // your adapter/service will map this
+          name: plant.name,
+          price: plant.price,
+          category: plant.category,
+        },
+      });
+      showMessage("success", `"${plant.name}" added to wishlist`);
+    } catch (err) {
+      showMessage("error", err.response?.data?.message || "Failed to add to wishlist");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   if (loading) return <div className="text-center">Loading plants...</div>;
 
   return (
@@ -55,6 +76,17 @@ const PlantList = forwardRef(({ onEdit }, ref) => {
             >
               Edit
             </button>
+
+            {/* NEW: Add to Wishlist (between Edit and Delete) */}
+            <button
+              className="btn btn-secondary"
+              onClick={() => addToWishlist(p)}
+              disabled={busyId === p._id}
+              style={{ marginLeft: 8, marginRight: 8 }}
+            >
+              {busyId === p._id ? "Adding..." : "Add to wishlist"}
+            </button>
+
             <button
               className="btn btn-logout"
               onClick={() => remove(p._id)}

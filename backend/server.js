@@ -17,6 +17,8 @@ app.use('/api/plants', require('./routes/plantRoutes'));
 app.use('/api/employees', require('./routes/employeeRoutes'));
 app.use('/api/caretips', require('./routes/caretipsRoutes'));
 app.use('/api/events', require('./routes/events'));
+app.use('/api/wishlist', require('./routes/wishlistRoutes'));
+
 
 app.use((err, req, res, next) => {
     console.error('[ERR]', err);
