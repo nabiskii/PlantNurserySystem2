@@ -1,34 +1,54 @@
+// backend/server.js
+const path = require('path');
 const express = require('express');
-const dotenv = require('dotenv');
 const cors = require('cors');
+const dotenv = require('dotenv');
 const connectDB = require('./config/db');
-require('./subscribers/careTipSubscribers'); 
 
-
-dotenv.config();
-
+// Load backend/.env (not the root)
+dotenv.config({ path: path.join(__dirname, '.env') });
 
 const app = express();
-
-app.use(cors());
+app.use(cors({ origin: ['http://localhost:3000', 'http://localhost:5173'] }));
 app.use(express.json());
-app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/plants', require('./routes/plantRoutes'));
-app.use('/api/employees', require('./routes/employeeRoutes'));
-app.use('/api/caretips', require('./routes/caretipsRoutes'));
-app.use('/api/events', require('./routes/events'));
+
+// middleware that attaches req.user
+const attachUser = require('./middleware/attachUser');
+app.use(attachUser);
+
+// routers (each file must `module.exports = router`)
+const authRoutes     = require('./routes/authRoutes');
+const plantRoutes    = require('./routes/plantRoutes');
+const employeeRoutes = require('./routes/employeeRoutes');
+const caretipsRoutes = require('./routes/caretipsRoutes');
+// const eventsRoutes   = require('./routes/events'); // mount only if it's a Router
+const wishlistRoutes = require('./routes/wishlistRoutes');
+
+app.use('/api/auth', authRoutes);
+app.use('/api/plants', plantRoutes);
+app.use('/api/employees', employeeRoutes);
+app.use('/api/caretips', caretipsRoutes);
+// if (typeof eventsRoutes === 'function') app.use('/api/events', eventsRoutes);
+app.use('/api/wishlist', wishlistRoutes);
+
+app.get('/health', (_req, res) => res.json({ ok: true }));
 
 app.use((err, req, res, next) => {
-    console.error('[ERR]', err);
-    res.status(err.status || 500).json({ message: err.message || 'Internal Server Error' });
+  console.error('[ERR]', err);
+  res.status(err.status || 500).json({ message: err.message || 'Internal Server Error' });
 });
-// Export the app object for testing
-if (require.main === module) {
-    connectDB();
-    // If the file is run directly, start the server
-    const PORT = process.env.PORT || 5001;
-    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+// Start even if DB is down (so /health works). You can tighten later.
+async function start() {
+  try {
+    await connectDB();
+    console.log('✅ Mongo connected');
+  } catch (e) {
+    console.error('❌ Mongo connect failed:', e.message);
   }
+  const PORT = process.env.PORT || 5001;
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+}
 
-
-module.exports = app
+if (require.main === module) start();
+module.exports = app;
