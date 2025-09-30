@@ -5,7 +5,7 @@ import { useMessage } from '../context/MessageContext';
 const PlantList = forwardRef(({ onEdit }, ref) => {
   const [plants, setPlants] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [busyId, setBusyId] = useState(null); // NEW: for button disable/spinner
+  const [busyId, setBusyId] = useState(null); // for button disable/spinner
   const { showMessage } = useMessage();
 
   const fetchPlants = useCallback(async () => {
@@ -38,13 +38,13 @@ const PlantList = forwardRef(({ onEdit }, ref) => {
     }
   };
 
-  // NEW: add-to-wishlist handler (works with the “global wishlist” backend)
+  // add-to-wishlist handler (global wishlist backend)
   const addToWishlist = async (plant) => {
     try {
       setBusyId(plant._id);
       await axiosInstance.post("/api/wishlist", {
         plant: {
-          _id: plant._id,               // your adapter/service will map this
+          _id: plant._id,
           name: plant.name,
           price: plant.price,
           category: plant.category,
@@ -69,7 +69,9 @@ const PlantList = forwardRef(({ onEdit }, ref) => {
             {p.category} • ${p.price} • Stock: {p.stockQuantity}
           </div>
           <div className="card-text">{p.description}</div>
-          <div className="card-actions">
+
+          {/* Actions: three buttons inside the card, aligned & equal width */}
+          <div className="card-actions card-actions--row">
             <button
               className="btn btn-register"
               onClick={() => onEdit(p)}
@@ -77,12 +79,11 @@ const PlantList = forwardRef(({ onEdit }, ref) => {
               Edit
             </button>
 
-            {/* NEW: Add to Wishlist (between Edit and Delete) */}
             <button
-              className="btn btn-secondary"
+              className="btn btn-register"
               onClick={() => addToWishlist(p)}
               disabled={busyId === p._id}
-              style={{ marginLeft: 8, marginRight: 8 }}
+              title="Add to wishlist"
             >
               {busyId === p._id ? "Adding..." : "Add to wishlist"}
             </button>
