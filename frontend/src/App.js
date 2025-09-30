@@ -6,6 +6,7 @@ import Profile from './pages/Profile';
 import Plants from './pages/Plants';
 import Employees from './pages/Employees';
 import CareTips from './pages/CareTips';
+import WishList from './pages/WishlistPage';
 import Home from './pages/Home';
 import { MessageProvider } from './context/MessageContext';
 import GlobalMessage from './components/GlobalMessage';
@@ -25,6 +26,7 @@ function App() {
           <Route path="/plants" element={<Plants />} />
           <Route path="/employees" element={<Employees />} />
           <Route path="/caretips" element={<CareTips />} />
+          <Route path="/wishlist" element={<WishList />} />
         </Routes>
       </Router>
     </MessageProvider>

@@ -85,4 +85,4 @@ const wishlistService = {
   },
 };
 
-module.exports = { wishlistService };
+module.exports = wishlistService;
