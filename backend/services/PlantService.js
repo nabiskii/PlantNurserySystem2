@@ -2,8 +2,8 @@ const Base = require('./BaseInventoryService');
 const Plant = require('../models/Plant');
 
 class PlantService extends Base {
-    async validate(data) {
-        if (!data?.name) {
+    async validate(data, ctx) {
+        if (ctx.op === 'create' && !data?.name) {
             const e = new Error('Name is required');
             e.status = 400;
             throw e;

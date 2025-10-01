@@ -2,11 +2,23 @@ const Base = require('./BaseInventoryService');
 const Employee = require('../models/Employee');
 
 class EmployeeService extends Base {
-    async validate(data) {
-        if (!data?.name) {
-            const e = new Error('Name is required');
-            e.status = 400;
-            throw e;
+    async validate(data, ctx) {
+        if (ctx.op === 'create') {
+            if (!data?.name) {
+                const e = new Error('Name is required');
+                e.status = 400;
+                throw e;
+            }
+            if (!data?.email) {
+                const e = new Error('Email is required');
+                e.status = 400;
+                throw e;
+            }
+            if (!data?.role) {
+                const e = new Error('Role is required');
+                e.status = 400;
+                throw e;
+            }
         }
         return data;
     }
