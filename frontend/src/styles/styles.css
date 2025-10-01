@@ -119,12 +119,6 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  transition: transform .12s ease, box-shadow .12s ease; /* subtle hover */
-}
-
-.card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(0,0,0,.08);
 }
 
 .card .card-title {
@@ -137,40 +131,11 @@ body {
   color: #6b7280;
 }
 
-/* Card actions — three buttons inside, aligned & equal width */
 .card .card-actions {
   margin-top: auto;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr); /* 3 equal buttons */
-  gap: 0.6rem;
-}
-
-.card .card-actions.card-actions--row {
-  align-items: center;
-  justify-content: space-between;
-}
-
-.card .card-actions .btn {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  /* allow wrapping so long labels show fully */
-  white-space: normal;
-  text-align: center;
-
-  /* keep consistent sizing even if one wraps to 2 lines */
-  width: 80px; 
-  height: auto;
-  min-height: 44px;
-  padding: 8px 12px;
-  border-radius: 10px;
-  font-weight: 600;
-  font-size: 0.95rem;
-  line-height: 1.2;
-  
-  
+  gap: 0.5rem;
 }
-
 
 /* Profile Page */
 .profile-page {

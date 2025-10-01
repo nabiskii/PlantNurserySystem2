@@ -42,14 +42,16 @@ const PlantList = forwardRef(({ onEdit }, ref) => {
   const addToWishlist = async (plant) => {
     try {
       setBusyId(plant._id);
-      await axiosInstance.post("/api/wishlist", {
-        plant: {
-          _id: plant._id,
-          name: plant.name,
-          price: plant.price,
-          category: plant.category,
-        },
-      });
+      await axiosInstance.post('/api/wishlist', {
+  plant: {
+    _id: plant._id,
+    name: plant.name,
+    category: plant.category,
+    price: plant.price,
+    stockQuantity: plant.stockQuantity,
+    description: plant.description,
+  },
+});
       showMessage("success", `"${plant.name}" added to wishlist`);
     } catch (err) {
       showMessage("error", err.response?.data?.message || "Failed to add to wishlist");
