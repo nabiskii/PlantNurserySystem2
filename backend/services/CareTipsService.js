@@ -19,7 +19,7 @@ class CareTipsService extends Base {
   }
 
   async validate(p, { op }) {
-    if (op === 'create' || op === 'update') {
+    if (op === 'create') {
       if (!p?.title)   { const e = new Error('title required');   e.status = 400; throw e; }
       if (!p?.content) { const e = new Error('content required'); e.status = 400; throw e; }
     }
