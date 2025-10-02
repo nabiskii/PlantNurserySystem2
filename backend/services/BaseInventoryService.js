@@ -69,10 +69,10 @@ class BaseInventoryService {
         let q = this.model.findById(id).lean();
         const {select, populate} = options;
         if (select) {
-            q = q.select(select);
+            query = query.select(select);
         }
         if (populate) {
-            q = q.populate(populate);
+            query = query.populate(populate);
         }
         const row = await q;
 

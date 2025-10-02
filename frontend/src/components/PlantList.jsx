@@ -5,6 +5,7 @@ import { useMessage } from '../context/MessageContext';
 const PlantList = forwardRef(({ onEdit }, ref) => {
   const [plants, setPlants] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState(null); // for button disable/spinner
   const { showMessage } = useMessage();
 
   const fetchPlants = useCallback(async () => {
@@ -37,6 +38,28 @@ const PlantList = forwardRef(({ onEdit }, ref) => {
     }
   };
 
+  // add-to-wishlist handler (global wishlist backend)
+  const addToWishlist = async (plant) => {
+    try {
+      setBusyId(plant._id);
+      await axiosInstance.post('/api/wishlist', {
+  plant: {
+    _id: plant._id,
+    name: plant.name,
+    category: plant.category,
+    price: plant.price,
+    stockQuantity: plant.stockQuantity,
+    description: plant.description,
+  },
+});
+      showMessage("success", `"${plant.name}" added to wishlist`);
+    } catch (err) {
+      showMessage("error", err.response?.data?.message || "Failed to add to wishlist");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   if (loading) return <div className="text-center">Loading plants...</div>;
 
   return (
@@ -48,13 +71,25 @@ const PlantList = forwardRef(({ onEdit }, ref) => {
             {p.category} • ${p.price} • Stock: {p.stockQuantity}
           </div>
           <div className="card-text">{p.description}</div>
-          <div className="card-actions">
+
+          {/* Actions: three buttons inside the card, aligned & equal width */}
+          <div className="card-actions card-actions--row">
             <button
               className="btn btn-register"
               onClick={() => onEdit(p)}
             >
               Edit
             </button>
+
+            <button
+              className="btn btn-register"
+              onClick={() => addToWishlist(p)}
+              disabled={busyId === p._id}
+              title="Add to wishlist"
+            >
+              {busyId === p._id ? "Adding..." : "Add to wishlist"}
+            </button>
+
             <button
               className="btn btn-logout"
               onClick={() => remove(p._id)}

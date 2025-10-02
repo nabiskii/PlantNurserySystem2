@@ -13,7 +13,7 @@ export default function EmployeesPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-4 grid md:grid-cols-[1fr_1fr] gap-6">
+    <div className="mx-auto p-4 grid gap-6 max-w-7xl md:grid-cols-[360px_1fr]">
       <EmployeeForm editing={editing} onDone={handleDone} />
       <EmployeeList ref={employeeListRef} onEdit={setEditing} />
     </div>

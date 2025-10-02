@@ -10,6 +10,9 @@ import Home from './pages/Home';
 import { MessageProvider } from './context/MessageContext';
 import GlobalMessage from './components/GlobalMessage';
 import './styles/styles.css'; // Import global styles
+import WishlistPage from './pages/WishlistPage';
+
+
 
 function App() {
   return (
@@ -25,6 +28,7 @@ function App() {
           <Route path="/plants" element={<Plants />} />
           <Route path="/employees" element={<Employees />} />
           <Route path="/caretips" element={<CareTips />} />
+          <Route path="/wishlist" element={<WishlistPage />} />
         </Routes>
       </Router>
     </MessageProvider>
