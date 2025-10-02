@@ -5,16 +5,37 @@ import axiosInstance from '../axiosConfig'; // ✅ use the configured axios
 function WishlistPage() {
   const [items, setItems] = useState([]);
 
-  useEffect(() => {
-    axiosInstance.get('/api/wishlist').then((res) => {
+  const fetchWishlist = () => {
+    axiosInstance.get('/api/wishlist').then(async (res) => {
       const list = Array.isArray(res.data) ? res.data : res.data.items || [];
-      setItems(list);
+      // for each item, fetch the plant details
+      const withPlantDetails = await Promise.all(
+        list.map(async (item) => {
+          if (item.plantId && typeof item.plantId === 'string') { // Check if plantId is a string
+            try {
+              const plantRes = await axiosInstance.get(
+                `/api/plants/${item.plantId}`
+              );
+              return { ...item, plant: plantRes.data };
+            } catch (error) {
+              console.error(`Failed to fetch plant details for ID: ${item.plantId}`, error);
+              // Return the item without the plant details if the fetch fails
+              return item;
+            }
+          }
+          return item;
+        })
+      );
+      setItems(withPlantDetails);
     });
+  };
+
+  useEffect(() => {
+    fetchWishlist();
   }, []);
 
-  const refetchFromResponse = (res) => {
-    const list = Array.isArray(res.data) ? res.data : res.data.items || [];
-    setItems(list);
+  const refetchFromResponse = () => {
+    fetchWishlist();
   };
 
   const deleteItem = (id) => {
@@ -30,6 +51,14 @@ function WishlistPage() {
     if (!newQty) return;
     axiosInstance
       .put(`/api/wishlist/${item._id}`, { quantity: Number(newQty) })
+      .then(refetchFromResponse);
+  };
+
+  const editNotes = (item) => {
+    const newNotes = prompt('Enter new notes', item.notes || '');
+    if (newNotes === null) return;
+    axiosInstance
+      .put(`/api/wishlist/${item._id}`, { notes: newNotes })
       .then(refetchFromResponse);
   };
 
@@ -74,10 +103,14 @@ function WishlistPage() {
 
                 {description && <div className="card-text">{description}</div>}
                 <div className="card-text">Qty: {it.quantity ?? 1}</div>
+                {it.notes && <div className="card-text" style={{fontStyle: 'italic'}}>{it.notes}</div>}
 
                 <div className="card-actions">
                   <button className="btn btn-register" onClick={() => editItem(it)}>
-                    Edit
+                    Edit Qty
+                  </button>
+                  <button className="btn btn-register" onClick={() => editNotes(it)}>
+                    Edit Notes
                   </button>
                   <button className="btn btn-register" onClick={() => cloneItem(it._id)}>
                     Clone

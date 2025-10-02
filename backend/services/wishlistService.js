@@ -26,17 +26,19 @@ async function addItem(plant) {
   const normalized = plantAdapter.getSummary(plant) || {};
   console.log('[wishlist:addItem] normalized =', normalized); // DEBUG
 
-  const item = new WishlistItem({
-    plantId: normalized.id,
-    quantity: 1,
-    name: normalized.name,
-    category: normalized.category,
-    price: normalized.price,
-    stockQuantity: normalized.stockQuantity,
-    description: normalized.description,
-  });
+  const existingItem = wishlist.items.find(item => item.plantId.toString() === normalized.id.toString());
 
-  wishlist.items.push(item);
+  if (existingItem) {
+    existingItem.quantity += 1;
+  } else {
+    const itemData = {
+      plantId: normalized.id,
+      quantity: 1,
+      notes: plant.notes || '',
+    };
+    wishlist.items.push(itemData);
+  }
+
   return wishlist.save();
 }
 

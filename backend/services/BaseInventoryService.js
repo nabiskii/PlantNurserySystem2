@@ -66,15 +66,15 @@ class BaseInventoryService {
 
     async findById (id, {user, options = {}} = {}) {
         await this.authorize(this._ctx('findById', user));
-        let q = await this.model.findById(id).lean();
+        let query = this.model.findById(id);
         const {select, populate} = options;
         if (select) {
-            q = q.select(select);
+            query = query.select(select);
         }
         if (populate) {
-            q = q.populate(populate);
+            query = query.populate(populate);
         }
-        const row = await q.exec();
+        const row = await query.lean();
 
         if (!row) {
             const e = new Error('Not Found');

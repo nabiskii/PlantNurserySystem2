@@ -13,6 +13,7 @@ const WishlistItemSchema = new mongoose.Schema(
 
     // Wishlist-specific
     quantity: { type: Number, default: 1 },
+    notes: { type: String, default: '' },
   },
   { _id: true }
 );
