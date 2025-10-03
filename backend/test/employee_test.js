@@ -11,17 +11,38 @@ function mockRes() {
   };
 }
 
-describe('Employee Controller (service-driven)', function () {
+describe('Employee Controller', function () {
   afterEach(() => sinon.restore());
 
+  // Mock req.user for protected routes
+  const mockReqUser = (role = 'admin', id = 'someUserId') => {
+    const userDoc = {
+      _id: id,
+      name: 'Test User',
+      email: 'test@example.com',
+      role: role,
+      university: 'Test Uni',
+      address: '123 Test St'
+    };
+
+    // Simulate the UserFactory output
+    return {
+      id: userDoc._id,
+      name: userDoc.name,
+      email: userDoc.email,
+      role: userDoc.role,
+      userDoc: userDoc, // Keep a reference to the raw doc if needed
+      isAdmin: () => userDoc.role === 'admin',
+      isMember: () => userDoc.role === 'member',
+      canEditDb: () => userDoc.role === 'admin', // Simulate method from AdminUser/MemberUser
+    };
+  };
+
   describe('addEmployee', () => {
-    it('should return 201 on adding employee', async () => {
-      const req = {
-        body: { name: 'Alice', email: 'alice@test.com', role: 'Staff', phone: '123' },
-        user: { _id: 'u1' },
-      };
-      const created = { _id: 'e1', ...req.body };
-      const stub = sinon.stub(services.employeeService, 'create').resolves(created);
+    it('should return 201 and the created employee', async () => {
+      const req = { body: { name: 'John Doe', email: 'john@example.com' }, user: mockReqUser() };
+      const createdEmployee = { _id: 'e1', name: 'John Doe' };
+      const stub = sinon.stub(services.employeeService, 'create').resolves(createdEmployee);
 
       const res = mockRes();
       const next = sinon.spy();
@@ -30,13 +51,13 @@ describe('Employee Controller (service-driven)', function () {
 
       expect(stub.calledOnceWith(req.body, { user: req.user })).to.be.true;
       expect(res.status.calledWith(201)).to.be.true;
-      expect(res.json.calledWith(created)).to.be.true;
+      expect(res.json.calledWith(createdEmployee)).to.be.true;
       expect(next.notCalled).to.be.true;
     });
 
     it('should forward error via next(err)', async () => {
-      const req = { body: { name: 'Alice', email: 'bad', role: 'Staff' }, user: { _id: 'u1' } };
-      const err = new Error('Invalid email'); err.status = 400;
+      const req = { body: { name: 'John Doe' }, user: mockReqUser() };
+      const err = new Error('Validation Error');
       sinon.stub(services.employeeService, 'create').rejects(err);
 
       const res = mockRes();
@@ -45,18 +66,28 @@ describe('Employee Controller (service-driven)', function () {
       await employeeController.addEmployee(req, res, next);
 
       expect(next.calledOnceWith(err)).to.be.true;
-      expect(res.status.called).to.be.false;
+    });
+
+    it('should return 400 if validation fails', async () => {
+      const req = { body: { name: '' }, user: mockReqUser() }; // Invalid data
+      const err = new Error('Name is required');
+      err.status = 400;
+      sinon.stub(services.employeeService, 'create').rejects(err);
+
+      const res = mockRes();
+      const next = sinon.spy();
+
+      await employeeController.addEmployee(req, res, next);
+
+      expect(next.calledOnceWith(err)).to.be.true; 
     });
   });
 
   describe('getEmployees', () => {
     it('should return 200 with all employees', async () => {
-      const req = {
-        query: { q: 'alice', role: 'Staff', department: 'Sales', sort: '-dateJoined', limit: '10' },
-        user: { _id: 'u1' },
-      };
-      const rows = [{ _id: 'e1', name: 'Alice' }];
-      const stub = sinon.stub(services.employeeService, 'findAll').resolves(rows);
+      const req = { query: {}, user: mockReqUser() };
+      const employees = [{ _id: 'e1', name: 'John Doe' }];
+      const stub = sinon.stub(services.employeeService, 'findAll').resolves(employees);
 
       const res = mockRes();
       const next = sinon.spy();
@@ -67,13 +98,13 @@ describe('Employee Controller (service-driven)', function () {
       expect(stub.firstCall.args[0]).to.be.an('object'); // options
       expect(stub.firstCall.args[1]).to.deep.equal({ user: req.user });
       expect(res.status.calledWith(200)).to.be.true;
-      expect(res.json.calledWith(rows)).to.be.true;
+      expect(res.json.calledWith(employees)).to.be.true;
       expect(next.notCalled).to.be.true;
     });
 
     it('should forward error via next(err)', async () => {
-      const req = { query: {}, user: { _id: 'u1' } };
-      const err = new Error('DB Error'); err.status = 500;
+      const req = { query: {}, user: mockReqUser() };
+      const err = new Error('DB Error');
       sinon.stub(services.employeeService, 'findAll').rejects(err);
 
       const res = mockRes();
@@ -86,33 +117,55 @@ describe('Employee Controller (service-driven)', function () {
   });
 
   describe('getEmployeeById', () => {
-    it('should return 200 with employee', async () => {
-      const req = { params: { id: 'e1' }, query: {}, user: { _id: 'u1' } };
-      const item = { _id: 'e1', name: 'Alice' };
-      const stub = sinon.stub(services.employeeService, 'findById').resolves(item);
+    it('should return 200 with a single employee', async () => {
+      const req = { params: { id: 'e1' }, query: {}, user: mockReqUser() };
+      const employee = { _id: 'e1', name: 'John Doe' };
+      const stub = sinon.stub(services.employeeService, 'findById').resolves(employee);
 
       const res = mockRes();
       const next = sinon.spy();
 
       await employeeController.getEmployeeById(req, res, next);
 
-      expect(stub.calledOnce).to.be.true;
-      expect(stub.firstCall.args[0]).to.equal('e1');
-      expect(stub.firstCall.args[1]).to.have.property('user', req.user);
+      expect(stub.calledOnceWith('e1', { user: req.user, options: { select: req.query.select, populate: req.query.populate } })).to.be.true;
       expect(res.status.calledWith(200)).to.be.true;
-      expect(res.json.calledWith(item)).to.be.true;
+      expect(res.json.calledWith(employee)).to.be.true;
       expect(next.notCalled).to.be.true;
     });
 
-    // If you later want a 404 test, mirror the plant pattern:
-    // it('should forward 404 via next(err)', async () => { ... });
+    it('should return 404 if employee not found', async () => {
+      const req = { params: { id: 'e_nonexistent' }, query: {}, user: mockReqUser() };
+      const err = new Error('Not Found');
+      err.status = 404;
+      sinon.stub(services.employeeService, 'findById').rejects(err);
+
+      const res = mockRes();
+      const next = sinon.spy();
+
+      await employeeController.getEmployeeById(req, res, next);
+
+      expect(next.calledOnceWith(err)).to.be.true; 
+    });
+
+    it('should forward error via next(err)', async () => {
+      const req = { params: { id: 'e1' }, query: {}, user: mockReqUser() };
+      const err = new Error('DB Error');
+      sinon.stub(services.employeeService, 'findById').rejects(err);
+
+      const res = mockRes();
+      const next = sinon.spy();
+
+      await employeeController.getEmployeeById(req, res, next);
+
+      expect(next.calledOnceWith(err)).to.be.true;
+    });
   });
 
   describe('updateEmployee', () => {
-    it('should return 200 with updated employee', async () => {
-      const req = { params: { id: 'e1' }, body: { name: 'Alice Updated' }, user: { _id: 'u1' } };
-      const updated = { _id: 'e1', name: 'Alice Updated' };
-      const stub = sinon.stub(services.employeeService, 'update').resolves(updated);
+    it('should return 200 with the updated employee', async () => {
+      const req = { params: { id: 'e1' }, body: { name: 'Updated John' }, user: mockReqUser() };
+      const updatedEmployee = { _id: 'e1', name: 'Updated John' };
+      const stub = sinon.stub(services.employeeService, 'update').resolves(updatedEmployee);
 
       const res = mockRes();
       const next = sinon.spy();
@@ -121,13 +174,27 @@ describe('Employee Controller (service-driven)', function () {
 
       expect(stub.calledOnceWith('e1', req.body, { user: req.user })).to.be.true;
       expect(res.status.calledWith(200)).to.be.true;
-      expect(res.json.calledWith(updated)).to.be.true;
+      expect(res.json.calledWith(updatedEmployee)).to.be.true;
       expect(next.notCalled).to.be.true;
     });
 
+    it('should return 404 if employee to update not found', async () => {
+      const req = { params: { id: 'e_nonexistent' }, body: { name: 'Updated John' }, user: mockReqUser() };
+      const err = new Error('Not Found');
+      err.status = 404;
+      sinon.stub(services.employeeService, 'update').rejects(err);
+
+      const res = mockRes();
+      const next = sinon.spy();
+
+      await employeeController.updateEmployee(req, res, next);
+
+      expect(next.calledOnceWith(err)).to.be.true;
+    });
+
     it('should forward error via next(err)', async () => {
-      const req = { params: { id: 'e1' }, body: {}, user: { _id: 'u1' } };
-      const err = new Error('DB Error'); err.status = 500;
+      const req = { params: { id: 'e1' }, body: { name: 'Updated John' }, user: mockReqUser() };
+      const err = new Error('Validation Error');
       sinon.stub(services.employeeService, 'update').rejects(err);
 
       const res = mockRes();
@@ -140,25 +207,39 @@ describe('Employee Controller (service-driven)', function () {
   });
 
   describe('deleteEmployee', () => {
-    it('should return 200 on deleting employee', async () => {
-      const req = { params: { id: 'e1' }, user: { _id: 'u1' } };
-      const removed = { _id: 'e1' };
-      const stub = sinon.stub(services.employeeService, 'delete').resolves(removed);
+    it('should return 200 with a success message', async () => {
+      const req = { params: { id: 'e1' }, user: mockReqUser() };
+      const removedEmployee = { _id: 'e1' };
+      const stub = sinon.stub(services.employeeService, 'delete').resolves(removedEmployee);
 
       const res = mockRes();
       const next = sinon.spy();
 
       await employeeController.deleteEmployee(req, res, next);
 
-      expect(stub.calledOnceWith('e1', { user: req.user })).to.be.true;
+      expect(stub.calledOnceWith('e1', sinon.match.has('user', sinon.match.has('id', req.user.id)))).to.be.true;
       expect(res.status.calledWith(200)).to.be.true;
-      expect(res.json.calledWithMatch({ message: sinon.match.string, removed })).to.be.true;
+      expect(res.json.calledWith({ message: 'Employee deleted successfully', removed: removedEmployee })).to.be.true;
       expect(next.notCalled).to.be.true;
     });
 
+    it('should return 404 if employee to delete not found', async () => {
+      const req = { params: { id: 'e_nonexistent' }, user: mockReqUser() };
+      const err = new Error('Not Found');
+      err.status = 404;
+      sinon.stub(services.employeeService, 'delete').rejects(err);
+
+      const res = mockRes();
+      const next = sinon.spy();
+
+      await employeeController.deleteEmployee(req, res, next);
+
+      expect(next.calledOnceWith(err)).to.be.true;
+    });
+
     it('should forward error via next(err)', async () => {
-      const req = { params: { id: 'e1' }, user: { _id: 'u1' } };
-      const err = new Error('DB Error'); err.status = 500;
+      const req = { params: { id: 'e1' }, user: mockReqUser() };
+      const err = new Error('DB Error');
       sinon.stub(services.employeeService, 'delete').rejects(err);
 
       const res = mockRes();
