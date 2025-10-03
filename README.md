@@ -3,10 +3,16 @@
 
 Assignment: **Software requirements analysis and design (**Full-Stack CRUD Application Development with DevOps Practices**)**
 
-**Public URL:** http://3.25.226.31/
+**Public URL:** [http://13.236.84.11](http://13.236.84.11)
 
 Login details to access Dashboard
+
+1. Admin
 Username: admin@gmail.com
+Password: admin123
+
+2. User
+Username: common@gmail.com
 Password: admin123
 
 
