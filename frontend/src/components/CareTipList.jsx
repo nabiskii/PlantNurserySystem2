@@ -7,11 +7,13 @@ import {
 } from "react";
 import { api } from "../lib/caretipsClient";
 import { useMessage } from "../context/MessageContext";
+import { useAuth } from '../context/AuthContext'; // Import useAuth
 
 const CareTipList = forwardRef(({ onEdit }, ref) => {
   const [careTips, setCareTips] = useState([]);
   const [loading, setLoading] = useState(true);
   const { showMessage } = useMessage();
+  const { isAdmin } = useAuth(); // Use the isAdmin helper
 
   const fetchCareTips = useCallback(async () => {
     try {
@@ -85,12 +87,16 @@ const CareTipList = forwardRef(({ onEdit }, ref) => {
           </div>
           <div className="card-text">{ct.content}</div>
           <div className="card-actions">
-            <button className="btn btn-register" onClick={() => onEdit?.(ct)}>
-              Edit
-            </button>
-            <button className="btn btn-logout" onClick={() => remove(ct._id)}>
-              Delete
-            </button>
+            {isAdmin && ( // Conditionally render Edit button
+              <button className="btn btn-register" onClick={() => onEdit?.(ct)}>
+                Edit
+              </button>
+            )}
+            {isAdmin && ( // Conditionally render Delete button
+              <button className="btn btn-logout" onClick={() => remove(ct._id)}>
+                Delete
+              </button>
+            )}
           </div>
         </div>
       ))}

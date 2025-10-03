@@ -1,5 +1,6 @@
 const Base = require('./BaseInventoryService');
 const Plant = require('../models/Plant');
+const Wishlist = require('../models/wishlistModel'); // Import Wishlist model
 
 class PlantService extends Base {
     async validate(data, ctx) {
@@ -42,6 +43,19 @@ class PlantService extends Base {
             }
             throw error;
         }
+    }
+
+    async delete(id, ctx) {
+        const removedPlant = await super.delete(id, ctx); // Delete the plant first
+
+        if (removedPlant) {
+            // Remove all wishlist items that reference the deleted plantId
+            await Wishlist.updateMany(
+                { 'items.plantId': id },
+                { $pull: { items: { plantId: id } } }
+            );
+        }
+        return removedPlant;
     }
 
     async filter (data) {
