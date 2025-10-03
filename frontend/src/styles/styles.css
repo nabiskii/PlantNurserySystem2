@@ -45,10 +45,10 @@ body {
 
 /* Buttons */
 .btn {
-  padding: 0.8rem 1rem;
+  padding: 0.5rem 0.7rem; /* Smaller default padding */
   border-radius: 6px;
   border: none;
-  font-size: 1rem;
+  font-size: 0.8rem; /* Smaller default font size */
   cursor: pointer;
   font-weight: 500;
   transition: all 0.2s;
@@ -124,19 +124,33 @@ body {
 .card .card-title {
   font-weight: bold;
   font-size: 1.2rem;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .card .card-text {
   font-size: 0.9rem;
   color: #6b7280;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
-.card .card-actions {
-  margin-top: auto;
-  display: flex;
-  gap: 0.5rem;
-}
+  .card .card-actions {
+    margin-top: auto;
+    display: flex;
+    flex-wrap: wrap; /* Allow buttons to wrap */
+    justify-content: flex-start; /* Align buttons to the left */
+    gap: 0.5rem;
+    width: 100%; /* Ensure full width for wrapping */
+  }
 
+  /* Responsive adjustments for buttons on small screens */
+  @media (max-width: 640px) {
+    .btn {
+      font-size: 0.7rem; /* Even smaller font size for buttons on very small screens */
+      padding: 0.4rem 0.5rem;
+    }
+  }
 /* Profile Page */
 .profile-page {
   max-width: 500px;

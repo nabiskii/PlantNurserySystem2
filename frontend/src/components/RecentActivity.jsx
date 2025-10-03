@@ -1,6 +1,6 @@
 export default function RecentActivity({ items = [] }) {
   return (
-    <div className="border rounded p-3">
+    <div className="card">
       <h3 className="text-lg font-semibold mb-2">Recent Activity</h3>
       <ol className="text-sm space-y-1 max-h-[50vh] overflow-auto">
         {items.length === 0 && <li className="opacity-60">No activity yet</li>}

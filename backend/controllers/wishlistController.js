@@ -1,9 +1,9 @@
 const services = require('../services'); // use services index so tests can stub
 
 // GET /api/wishlist
-const getWishlist = async (_req, res, next) => {
+const getWishlist = async (req, res, next) => {
   try {
-    const data = await services.wishlistService.getWishlist();
+    const data = await services.wishlistService.getWishlist(req.user.id);
     res.status(200).json(data); // tests expect 200
   } catch (e) { next(e); }
 };
@@ -11,7 +11,7 @@ const getWishlist = async (_req, res, next) => {
 // POST /api/wishlist
 const addWishlistItem = async (req, res, next) => {
   try {
-    const data = await services.wishlistService.addItem(req.body.plant);
+    const data = await services.wishlistService.addItem(req.user.id, req.body.plant);
     res.status(201).json(data); // tests expect 201
   } catch (e) { next(e); }
 };
@@ -19,7 +19,7 @@ const addWishlistItem = async (req, res, next) => {
 // PUT /api/wishlist/:itemId
 const updateWishlistItem = async (req, res, next) => {
   try {
-    const data = await services.wishlistService.updateItem(req.params.itemId, req.body);
+    const data = await services.wishlistService.updateItem(req.user.id, req.params.itemId, req.body);
     if (!data) return res.status(404).json({ message: 'Item not found' });
     res.status(200).json(data); // tests expect 200
   } catch (e) { next(e); }
@@ -28,7 +28,7 @@ const updateWishlistItem = async (req, res, next) => {
 // DELETE /api/wishlist/:itemId
 const deleteWishlistItem = async (req, res, next) => {
   try {
-    const data = await services.wishlistService.deleteItem(req.params.itemId);
+    const data = await services.wishlistService.deleteItem(req.user.id, req.params.itemId);
     res.status(200).json(data); // tests expect 200
   } catch (e) { next(e); }
 };
@@ -36,7 +36,7 @@ const deleteWishlistItem = async (req, res, next) => {
 // POST /api/wishlist/:itemId/clone
 const cloneWishlistItem = async (req, res, next) => {
   try {
-    const data = await services.wishlistService.cloneItem(req.params.itemId);
+    const data = await services.wishlistService.cloneItem(req.user.id, req.params.itemId);
     if (!data) return res.status(404).json({ message: 'Item not found' });
     res.status(200).json(data); // tests expect 200
   } catch (e) { next(e); }

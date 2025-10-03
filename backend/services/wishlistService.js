@@ -5,14 +5,14 @@ const Plant = require('../models/Plant');
 
 const plantAdapter = new InternalPlantAdapter();
 
-async function getWishlist() {
-  let wishlist = await Wishlist.findOne();
-  if (!wishlist) wishlist = await Wishlist.create({ items: [] });
+async function getWishlist(userId) {
+  let wishlist = await Wishlist.findOne({ userId });
+  if (!wishlist) wishlist = await Wishlist.create({ userId, items: [] });
   return wishlist;
 }
 
-async function addItem(plant) {
-  const wishlist = await getWishlist();
+async function addItem(userId, plant) {
+  const wishlist = await getWishlist(userId);
 
   // If only id came, fetch full plant from DB
   if (plant && !plant.name) {
@@ -42,8 +42,8 @@ async function addItem(plant) {
   return wishlist.save();
 }
 
-async function updateItem(itemId, update) {
-  const wishlist = await getWishlist();
+async function updateItem(userId, itemId, update) {
+  const wishlist = await getWishlist(userId);
   const item = wishlist.items.id(itemId);
   if (!item) return null;
 
@@ -51,15 +51,15 @@ async function updateItem(itemId, update) {
   return wishlist.save();
 }
 
-async function deleteItem(itemId) {
-  const wishlist = await getWishlist();
+async function deleteItem(userId, itemId) {
+  const wishlist = await getWishlist(userId);
   const it = wishlist.items.id(itemId);
   if (it) it.remove();
   return wishlist.save();
 }
 
-async function cloneItem(itemId) {
-  const wishlist = await getWishlist();
+async function cloneItem(userId, itemId) {
+  const wishlist = await getWishlist(userId);
   const item = wishlist.items.id(itemId);
   if (!item) return null;
 
