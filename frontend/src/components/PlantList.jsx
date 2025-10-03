@@ -1,12 +1,14 @@
 import { useState, useEffect, forwardRef, useImperativeHandle, useCallback } from 'react';
 import axiosInstance from '../axiosConfig';
 import { useMessage } from '../context/MessageContext';
+import { useAuth } from '../context/AuthContext'; // Import useAuth
 
 const PlantList = forwardRef(({ onEdit }, ref) => {
   const [plants, setPlants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState(null); // for button disable/spinner
   const { showMessage } = useMessage();
+  const { isAdmin } = useAuth(); // Use the isAdmin helper
 
   const fetchPlants = useCallback(async () => {
     try {
@@ -74,12 +76,14 @@ const PlantList = forwardRef(({ onEdit }, ref) => {
 
           {/* Actions: three buttons inside the card, aligned & equal width */}
           <div className="card-actions card-actions--row">
-            <button
-              className="btn btn-register"
-              onClick={() => onEdit(p)}
-            >
-              Edit
-            </button>
+            {isAdmin && ( // Conditionally render Edit button
+              <button
+                className="btn btn-register"
+                onClick={() => onEdit(p)}
+              >
+                Edit
+              </button>
+            )}
 
             <button
               className="btn btn-register"
@@ -90,12 +94,14 @@ const PlantList = forwardRef(({ onEdit }, ref) => {
               {busyId === p._id ? "Adding..." : "Add to wishlist"}
             </button>
 
-            <button
-              className="btn btn-logout"
-              onClick={() => remove(p._id)}
-            >
-              Delete
-            </button>
+            {isAdmin && ( // Conditionally render Delete button
+              <button
+                className="btn btn-logout"
+                onClick={() => remove(p._id)}
+              >
+                Delete
+              </button>
+            )}
           </div>
         </div>
       ))}

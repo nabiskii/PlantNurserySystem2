@@ -3,11 +3,13 @@ import CareTipList from '../components/CareTipList';
 import CareTipForm from '../components/CareTipForm';
 import RecentActivity from '../components/RecentActivity';
 import { subscribeActivity } from '../lib/caretipsClient';
+import { useAuth } from '../context/AuthContext'; // Import useAuth
 
 export default function CareTipsPage() {
   const [editing, setEditing] = useState(null);
   const [activity, setActivity] = useState([]);
   const careTipListRef = useRef(null); // reference to PlantList
+  const { isAdmin } = useAuth(); // Use the isAdmin helper
 
   const handleDone = async () => {
     setEditing(null);
@@ -43,7 +45,7 @@ export default function CareTipsPage() {
   return (
     <div className="max-w-6xl mx-auto p-4 grid md:grid-cols-[1fr_1fr] lg:grid-cols-[2fr_1fr] gap-6">
       <div className="space-y-6">
-        <CareTipForm editing={editing} onDone={handleDone} />
+        {isAdmin && <CareTipForm editing={editing} onDone={handleDone} />} {/* Conditionally render CareTipForm */}
         <CareTipList ref={careTipListRef} onEdit={setEditing} />
       </div>
       <RecentActivity items={activity} />
