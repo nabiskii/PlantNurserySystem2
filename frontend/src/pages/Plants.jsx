@@ -1,12 +1,12 @@
 import { useState, useRef } from 'react';
 import PlantList from '../components/PlantList';
 import PlantForm from '../components/PlantForm';
-import { useAuth } from '../context/AuthContext'; // Import useAuth
+import { useAuth } from '../context/AuthContext'; 
 
 export default function PlantsPage() {
   const [editing, setEditing] = useState(null);
-  const plantListRef = useRef(null); // reference to PlantList
-  const { isAdmin } = useAuth(); // Use the isAdmin helper
+  const plantListRef = useRef(null); 
+  const { isAdmin } = useAuth(); 
 
   const handleDone = () => {
     setEditing(null);

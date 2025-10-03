@@ -8,12 +8,12 @@ const generateToken = (id) => {
 };
 
 const registerUser = async (req, res) => {
-    const { name, email, password, role, university, address } = req.body; // Include role, university, address
+    const { name, email, password, role, university, address } = req.body;
     try {
         const userExists = await User.findOne({ email });
         if (userExists) return res.status(400).json({ message: 'User already exists' });
 
-        const user = await User.create({ name, email, password, role, university, address }); // Pass role, university, address
+        const user = await User.create({ name, email, password, role, university, address });
         res.status(201).json({ id: user.id, name: user.name, email: user.email, role: user.role, university: user.university, address: user.address, token: generateToken(user.id) });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -30,7 +30,7 @@ const loginUser = async (req, res) => {
             res.status(401).json({ message: 'Invalid email or password' });
         }
     } catch (error) {
-        console.error("Error during login:", error); // Keep error logging
+        console.error("Error during login:", error);
         res.status(500).json({ message: error.message });
     }
 };
@@ -84,7 +84,7 @@ const updateUserProfile = async (req, res) => {
             token: generateToken(updatedUserDoc.id)
         });
     } catch (error) {
-        console.error("Error updating user profile:", error); // Log the full error
+        console.error("Error updating user profile:", error);
         res.status(500).json({ message: error.message });
     }
 };

@@ -21,10 +21,10 @@ const UserSchema = new mongoose.Schema({
         enum: ['member', 'admin'],
         default: 'member',
     },
-    university: { // Added university field
+    university: { 
         type: String,
     },
-    address: {    // Added address field
+    address: {   
         type: String,
     },
 }, {

@@ -3,7 +3,7 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const connectDB = require('./config/db');
-require('./subscribers/careTipSubscribers'); // keep your existing subscriber
+require('./subscribers/careTipSubscribers');
 
 dotenv.config();
 
@@ -19,7 +19,7 @@ app.use((req, _res, next) => {
   next();
 });
 
-/* ------------ your API routes (unchanged) ------------ */
+/* ------------ API routes ------------ */
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/plants', require('./routes/plantRoutes'));
 app.use('/api/employees', require('./routes/employeeRoutes'));
@@ -27,24 +27,24 @@ app.use('/api/caretips', require('./routes/caretipsRoutes'));
 app.use('/api/events', require('./routes/events'));
 app.use('/api/wishlist', require('./routes/wishlistRoutes')); // <-- POST /api/wishlist
 
-/* ------------ health check (NEW) ------------ */
+/* ------------ health check ------------ */
 app.get('/health', (_req, res) => {
   res.json({ ok: true, port: process.env.PORT || 5001 });
 });
 
-/* ------------ 404 handler (NEW, keep before error handler) ------------ */
+/* ------------ 404 handler ------------ */
 app.use((req, res) => {
   console.log('[404]', req.method, req.originalUrl);
   res.status(404).json({ message: 'Not Found', path: req.originalUrl });
 });
 
-/* ------------ error handler (unchanged, keep last) ------------ */
+/* ------------ error handler ------------ */
 app.use((err, req, res, _next) => {
   console.error('[ERR]', err);
   res.status(err.status || 500).json({ message: err.message || 'Internal Server Error' });
 });
 
-/* ------------ start only when run directly (unchanged) ------------ */
+
 // Export the app object for testing
 if (require.main === module) {
   connectDB();

@@ -1,13 +1,13 @@
 import { useState, useEffect, forwardRef, useImperativeHandle, useCallback } from 'react';
 import axiosInstance from '../axiosConfig';
 import { useMessage } from '../context/MessageContext';
-import { useAuth } from '../context/AuthContext'; // Import useAuth
+import { useAuth } from '../context/AuthContext'; 
 
 const EmployeeList = forwardRef(({ onEdit }, ref) => {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const { showMessage } = useMessage();
-  const { isAdmin } = useAuth(); // Use the isAdmin helper
+  const { isAdmin } = useAuth(); 
 
   const fetchEmployees = useCallback(async () => {
     try {
@@ -56,7 +56,7 @@ const EmployeeList = forwardRef(({ onEdit }, ref) => {
             </div>
           )}
           <div className="card-actions">
-            {isAdmin && ( // Conditionally render Edit button
+            {isAdmin && ( 
               <button
                 className="btn btn-register"
                 onClick={() => onEdit(e)}
@@ -64,7 +64,7 @@ const EmployeeList = forwardRef(({ onEdit }, ref) => {
                 Edit
               </button>
             )}
-            {isAdmin && ( // Conditionally render Delete button
+            {isAdmin && ( 
               <button
                 className="text-red-500 hover:text-red-700 p-1 rounded"
                 onClick={() => removeEmployee(e._id)}
