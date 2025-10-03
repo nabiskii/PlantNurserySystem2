@@ -1,11 +1,13 @@
 import { useState, useEffect, forwardRef, useImperativeHandle, useCallback } from 'react';
 import axiosInstance from '../axiosConfig';
 import { useMessage } from '../context/MessageContext';
+import { useAuth } from '../context/AuthContext'; // Import useAuth
 
 const EmployeeList = forwardRef(({ onEdit }, ref) => {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const { showMessage } = useMessage();
+  const { isAdmin } = useAuth(); // Use the isAdmin helper
 
   const fetchEmployees = useCallback(async () => {
     try {
@@ -52,18 +54,22 @@ const EmployeeList = forwardRef(({ onEdit }, ref) => {
             Joined: {new Date(e.dateJoined).toLocaleDateString()}
           </div>
           <div className="card-actions">
-            <button
-              className="btn btn-register"
-              onClick={() => onEdit(e)}
-            >
-              Edit
-            </button>
-            <button
-              className="btn btn-logout"
-              onClick={() => removeEmployee(e._id)}
-            >
-              Delete
-            </button>
+            {isAdmin && ( // Conditionally render Edit button
+              <button
+                className="btn btn-register"
+                onClick={() => onEdit(e)}
+              >
+                Edit
+              </button>
+            )}
+            {isAdmin && ( // Conditionally render Delete button
+              <button
+                className="btn btn-logout"
+                onClick={() => removeEmployee(e._id)}
+              >
+                Delete
+              </button>
+            )}
           </div>
         </div>
       ))}

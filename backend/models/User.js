@@ -2,18 +2,48 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 
-const userSchema = new mongoose.Schema({
-    name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
-    university: { type: String },
-    address: { type: String },
+const UserSchema = new mongoose.Schema({
+    name: {
+        type: String,
+        required: true,
+    },
+    email: {
+        type: String,
+        required: true,
+        unique: true,
+    },
+    password: {
+        type: String,
+        required: true,
+    },
+    role: {
+        type: String,
+        enum: ['member', 'admin'],
+        default: 'member',
+    },
+    university: { // Added university field
+        type: String,
+    },
+    address: {    // Added address field
+        type: String,
+    },
+}, {
+    timestamps: true,
 });
 
-userSchema.pre('save', async function (next) {
-    if (!this.isModified('password')) return next();
+// Hash password before saving
+UserSchema.pre('save', async function (next) {
+    if (!this.isModified('password')) {
+        next();
+    }
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
 });
 
-module.exports = mongoose.model('User', userSchema);
+// Discriminators for role-based access
+const User = mongoose.model('User', UserSchema);
+
+const AdminUser = User.discriminator('AdminUser', new mongoose.Schema({}));
+const MemberUser = User.discriminator('MemberUser', new mongoose.Schema({}));
+
+module.exports = { User, AdminUser, MemberUser };
