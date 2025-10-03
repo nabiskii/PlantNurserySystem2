@@ -32,6 +32,19 @@ app.get('/health', (_req, res) => {
   res.json({ ok: true, port: process.env.PORT || 5001 });
 });
 
+ console.log('Registered routes:');
+  app._router.stack.forEach(function(middleware) {
+    if (middleware.route) { // routes registered directly on the app
+      console.log(middleware.route.path);
+    } else if (middleware.name === 'router') { // routers mounted on the app
+      middleware.handle.stack.forEach(function(handler) {
+        if (handler.route) {
+          console.log(middleware.regexp.source.replace('^','').replace('\\/?$','').replace(/\\\//g, '/') + handler.route.path);
+        }
+      });
+    }
+  });
+
 /* ------------ 404 handler (NEW, keep before error handler) ------------ */
 app.use((req, res) => {
   console.log('[404]', req.method, req.originalUrl);
