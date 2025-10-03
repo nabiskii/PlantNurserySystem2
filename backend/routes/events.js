@@ -51,6 +51,6 @@ function sseHandler(req, res) {
   });
 }
 
-router.get('/', sseHandler);
+router.get('/caretips', sseHandler);
 
 module.exports = router;
