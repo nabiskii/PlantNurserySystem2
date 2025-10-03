@@ -15,9 +15,14 @@ export default function PlantsPage() {
   };
 
   return (
-    <div className="mx-auto p-4 grid gap-6 max-w-7xl md:grid-cols-[360px_1fr]">
-      {isAdmin && <PlantForm editing={editing} onDone={handleDone} />} {/* Conditionally render PlantForm */}
-      <PlantList ref={plantListRef} onEdit={setEditing} />
+    <div className="mx-auto p-4 max-w-7xl">
+      {isAdmin ? (
+        <div className="grid gap-6 md:grid-cols-[360px_1fr]">
+          <PlantForm editing={editing} onDone={handleDone} />
+          <PlantList ref={plantListRef} onEdit={setEditing} />
+        </div>
+      ) : (
+        <PlantList ref={plantListRef} onEdit={setEditing} />
+      )}
     </div>
-  );
-}
+  );}

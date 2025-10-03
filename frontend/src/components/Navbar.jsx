@@ -16,9 +16,9 @@ const Navbar = () => {
       <div className="navbar-right">
         {user ? (
           <>
-            <Link to="/plants" className="nav-link">Plants CRUD</Link>
-            <Link to="/employees" className="nav-link">Employees CRUD</Link>
-            <Link to="/caretips" className="nav-link">Care Tips CRUD</Link>
+            <Link to="/plants" className="nav-link">Plants</Link>
+            <Link to="/caretips" className="nav-link">Care Tips</Link>
+            <Link to="/employees" className="nav-link">Contact the Team</Link>
 
             {/* NEW: wishlist link */}
             <Link to="/wishlist" className="nav-link">Wishlist</Link>
