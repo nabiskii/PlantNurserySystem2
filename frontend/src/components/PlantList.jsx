@@ -1,14 +1,14 @@
 import { useState, useEffect, forwardRef, useImperativeHandle, useCallback } from 'react';
 import axiosInstance from '../axiosConfig';
 import { useMessage } from '../context/MessageContext';
-import { useAuth } from '../context/AuthContext'; // Import useAuth
+import { useAuth } from '../context/AuthContext'; 
 
 const PlantList = forwardRef(({ onEdit }, ref) => {
   const [plants, setPlants] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [busyId, setBusyId] = useState(null); // for button disable/spinner
+  const [busyId, setBusyId] = useState(null); 
   const { showMessage } = useMessage();
-  const { isAdmin } = useAuth(); // Use the isAdmin helper
+  const { isAdmin } = useAuth(); 
 
   const fetchPlants = useCallback(async () => {
     try {
@@ -76,7 +76,7 @@ const PlantList = forwardRef(({ onEdit }, ref) => {
 
           {/* Actions: three buttons inside the card, aligned & equal width */}
           <div className="card-actions card-actions--row">
-            {isAdmin && ( // Conditionally render Edit button
+            {isAdmin && (
               <button
                 className="btn btn-register"
                 onClick={() => onEdit(p)}
@@ -94,7 +94,7 @@ const PlantList = forwardRef(({ onEdit }, ref) => {
               {busyId === p._id ? "Adding..." : "Add to wishlist"}
             </button>
 
-            {isAdmin && ( // Conditionally render Delete button
+            {isAdmin && ( 
               <button
                 className="text-red-500 hover:text-red-700 p-1 rounded"
                 onClick={() => remove(p._id)}

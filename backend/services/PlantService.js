@@ -1,6 +1,6 @@
 const Base = require('./BaseInventoryService');
 const Plant = require('../models/Plant');
-const Wishlist = require('../models/wishlistModel'); // Import Wishlist model
+const Wishlist = require('../models/wishlistModel');
 
 class PlantService extends Base {
     async validate(data, ctx) {

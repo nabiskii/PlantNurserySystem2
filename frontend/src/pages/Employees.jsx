@@ -1,12 +1,12 @@
 import { useState, useRef } from 'react';
 import EmployeeList from '../components/EmployeeList';
 import EmployeeForm from '../components/EmployeeForm';
-import { useAuth } from '../context/AuthContext'; // Import useAuth
+import { useAuth } from '../context/AuthContext'; 
 
 export default function EmployeesPage() {
   const [editing, setEditing] = useState(null);
-  const employeeListRef = useRef(null); // reference to EmployeeList
-  const { isAdmin } = useAuth(); // Use the isAdmin helper
+  const employeeListRef = useRef(null); 
+  const { isAdmin } = useAuth(); 
 
   const handleDone = () => {
     setEditing(null);

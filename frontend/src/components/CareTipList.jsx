@@ -7,17 +7,16 @@ import {
 } from "react";
 import { api } from "../lib/caretipsClient";
 import { useMessage } from "../context/MessageContext";
-import { useAuth } from '../context/AuthContext'; // Import useAuth
+import { useAuth } from '../context/AuthContext';
 
 const CareTipList = forwardRef(({ onEdit }, ref) => {
   const [careTips, setCareTips] = useState([]);
   const [loading, setLoading] = useState(true);
   const { showMessage } = useMessage();
-  const { isAdmin } = useAuth(); // Use the isAdmin helper
+  const { isAdmin } = useAuth(); 
 
   const fetchCareTips = useCallback(async () => {
     try {
-      // no filters → fetch all
       const data = await api.list({ sort: '-updatedAt' });
       setCareTips(data);
     } catch (err) {
@@ -87,12 +86,12 @@ const CareTipList = forwardRef(({ onEdit }, ref) => {
           </div>
           <div className="card-text">{ct.content}</div>
           <div className="card-actions">
-            {isAdmin && ( // Conditionally render Edit button
+            {isAdmin && ( 
               <button className="btn btn-register" onClick={() => onEdit?.(ct)}>
                 Edit
               </button>
             )}
-            {isAdmin && ( // Conditionally render Delete button
+            {isAdmin && ( 
               <button
                 className="text-red-500 hover:text-red-700 p-1 rounded"
                 onClick={() => remove(ct._id)}

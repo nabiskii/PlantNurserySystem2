@@ -1,6 +1,6 @@
 // src/pages/WishlistPage.jsx
 import React, { useEffect, useState } from 'react';
-import axiosInstance from '../axiosConfig'; // ✅ use the configured axios
+import axiosInstance from '../axiosConfig'; 
 
 function WishlistPage() {
   const [items, setItems] = useState([]);
@@ -11,7 +11,7 @@ function WishlistPage() {
       // for each item, fetch the plant details
       const withPlantDetails = await Promise.all(
         list.map(async (item) => {
-          if (item.plantId && typeof item.plantId === 'string') { // Check if plantId is a string
+          if (item.plantId && typeof item.plantId === 'string') { 
             try {
               const plantRes = await axiosInstance.get(
                 `/api/plants/${item.plantId}`

@@ -8,23 +8,23 @@ const {
   cloneWishlistItem,
 } = require('../controllers/wishlistController');
 
-const { protect } = require('../middleware/authMiddleware'); // Import protect middleware
+const { protect } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
 // GET /api/wishlist
-router.get('/', protect, getWishlist); // Apply protect middleware
+router.get('/', protect, getWishlist);
 
 // POST /api/wishlist
-router.post('/', protect, addWishlistItem); // Apply protect middleware
+router.post('/', protect, addWishlistItem);
 
 // PUT /api/wishlist/:itemId
-router.put('/:itemId', protect, updateWishlistItem); // Apply protect middleware
+router.put('/:itemId', protect, updateWishlistItem);
 
 // DELETE /api/wishlist/:itemId
-router.delete('/:itemId', protect, deleteWishlistItem); // Apply protect middleware
+router.delete('/:itemId', protect, deleteWishlistItem);
 
 // POST /api/wishlist/:itemId/clone
-router.post('/:itemId/clone', protect, cloneWishlistItem); // Apply protect middleware
+router.post('/:itemId/clone', protect, cloneWishlistItem);
 
 module.exports = router;

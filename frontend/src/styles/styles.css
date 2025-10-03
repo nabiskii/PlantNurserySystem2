@@ -138,16 +138,16 @@ body {
   .card .card-actions {
     margin-top: auto;
     display: flex;
-    flex-wrap: wrap; /* Allow buttons to wrap */
-    justify-content: flex-start; /* Align buttons to the left */
+    flex-wrap: wrap; 
+    justify-content: flex-start; 
     gap: 0.5rem;
-    width: 100%; /* Ensure full width for wrapping */
+    width: 100%; 
   }
 
   /* Responsive adjustments for buttons on small screens */
   @media (max-width: 640px) {
     .btn {
-      font-size: 0.7rem; /* Even smaller font size for buttons on very small screens */
+      font-size: 0.7rem; 
       padding: 0.4rem 0.5rem;
     }
   }
