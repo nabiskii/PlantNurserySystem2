@@ -47,12 +47,14 @@ const EmployeeList = forwardRef(({ onEdit }, ref) => {
         <div key={e._id} className="card">
           <div className="card-title">{e.name}</div>
           <div className="card-text">
-            {e.role} • {e.department} • {e.phone}
+            {e.role} • {e.department} {isAdmin && `• ${e.phone}`}
           </div>
           <div className="card-text">{e.email}</div>
-          <div className="card-text">
-            Joined: {new Date(e.dateJoined).toLocaleDateString()}
-          </div>
+          {isAdmin && (
+            <div className="card-text">
+              Joined: {new Date(e.dateJoined).toLocaleDateString()}
+            </div>
+          )}
           <div className="card-actions">
             {isAdmin && ( // Conditionally render Edit button
               <button

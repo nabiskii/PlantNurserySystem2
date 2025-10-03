@@ -19,7 +19,15 @@ const WishlistItemSchema = new mongoose.Schema(
 );
 
 const WishlistSchema = new mongoose.Schema(
-  { items: [WishlistItemSchema] },
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      unique: true,
+    },
+    items: [WishlistItemSchema],
+  },
   { timestamps: true }
 );
 
